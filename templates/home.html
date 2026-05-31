@@ -1,19 +1,62 @@
 {% extends "base.html" %}
 
-{% block title %}Keko Figueroa — Portfolio{% endblock %}
+{% block title %}Keko-Figueroa.Dev — Back-end, Data &amp; AI{% endblock %}
 
 {% block content %}
 <section class="hero">
-  <h1>Keko Figueroa</h1>
-  <p class="tagline">Full-stack developer (Flask, Django, Next.js)</p>
-  <p class="body-text">
-    Site under construction. Portfolio and case studies coming soon.
-  </p>
-  <nav class="links" aria-label="Contact links">
-    <a href="mailto:keko@keko-figueroa.dev">keko@keko-figueroa.dev</a>
-    <a href="https://github.com/KekoFigueroa-dev" target="_blank" rel="noopener noreferrer">
-      GitHub
-    </a>
-  </nav>
+  {# Hero visual slot: static/profile.svg placeholder today.
+     Drop static/profile.jpg to replace. Future: rotating slidedeck — see AGENTS.md § Hero visual. #}
+  <img
+    class="profile-avatar"
+    src="{{ url_for('static', filename=profile_file) }}"
+    alt="Keko-Figueroa.Dev profile"
+    width="120"
+    height="120"
+  />
+  <p class="hero-prompt mono">{{ hero_prompt }}</p>
+  <h1>{{ site_name }}</h1>
+  <a class="hero-email mono" href="mailto:{{ site_email }}">{{ site_email }}</a>
+  <p class="hero-subhead">Back-end, Data &amp; AI engineer building reliable systems—especially where money moves.</p>
+  <p class="hero-support mono">Python · SQL · Linux • APIs, pipelines, and AI agents that ship.</p>
+</section>
+
+<section class="section">
+  <h2 class="section-title">Featured Projects</h2>
+  <div class="card-grid">
+    {% for project in projects %}
+    <article class="card">
+      {% if project.status == "in_progress" %}
+      <span class="badge badge-progress">In progress</span>
+      {% endif %}
+      <h3 class="card-title">{{ project.title }}</h3>
+      <p class="card-oneliner">{{ project.oneliner }}</p>
+      <ul class="card-points">
+        {% for point in project.key_points[:3] %}
+        <li>{{ point }}</li>
+        {% endfor %}
+      </ul>
+      <div class="card-links">
+        {% if project.live_url %}
+        <a href="{{ project.live_url }}" target="_blank" rel="noopener noreferrer">Live demo</a>
+        {% endif %}
+        <a href="{{ project.repo_url }}" target="_blank" rel="noopener noreferrer">Repo</a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  <p class="section-cta"><a href="{{ url_for('projects') }}">View all projects →</a></p>
+</section>
+
+<section class="section">
+  <h2 class="section-title">Latest writing</h2>
+  <ul class="post-list">
+    {% for post in posts %}
+    <li class="post-item">
+      <a href="{{ url_for('blog_post', slug=post.slug) }}">{{ post.title }}</a>
+      <span class="post-date mono">{{ post.date }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="section-cta"><a href="{{ url_for('blog') }}">Read the blog →</a></p>
 </section>
 {% endblock %}

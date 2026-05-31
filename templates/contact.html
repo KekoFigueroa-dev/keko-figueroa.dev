@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Contact — Keko-Figueroa.Dev{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <h1>Contact</h1>
+  <p class="page-lead">Open to back-end, data, and AI engineering roles—especially fintech and payments.</p>
+</section>
+
+<section class="contact-cards">
+  <a class="contact-card" href="mailto:{{ site_email }}">
+    <span class="mono contact-label">email</span>
+    <span class="contact-value">{{ site_email }}</span>
+  </a>
+  <a class="contact-card" href="{{ site_github }}" target="_blank" rel="noopener noreferrer">
+    <span class="mono contact-label">github</span>
+    <span class="contact-value">KekoFigueroa-dev</span>
+  </a>
+  <a class="contact-card" href="{{ site_linkedin }}" target="_blank" rel="noopener noreferrer">
+    <span class="mono contact-label">linkedin</span>
+    <span class="contact-value">sergio-figueroa</span>
+  </a>
+</section>
+{% endblock %}

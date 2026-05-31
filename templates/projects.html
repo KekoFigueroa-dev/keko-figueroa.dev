@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Projects — Keko-Figueroa.Dev{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <h1>Projects</h1>
+  <p class="page-lead">Case studies and work in progress—back-end systems, data pipelines, and fintech-adjacent products.</p>
+</section>
+
+{% for project in projects %}
+<article class="case-study" id="{{ project.slug }}">
+  <div class="case-study-header">
+    {% if project.status == "in_progress" %}
+    <span class="badge badge-progress">In progress — details and images coming soon</span>
+    {% endif %}
+    <h2>{{ project.title }}</h2>
+    <p class="case-oneliner">{{ project.oneliner }}</p>
+    <div class="card-links">
+      {% if project.live_url %}
+      <a href="{{ project.live_url }}" target="_blank" rel="noopener noreferrer">Live demo</a>
+      {% endif %}
+      <a href="{{ project.repo_url }}" target="_blank" rel="noopener noreferrer">Repo</a>
+    </div>
+  </div>
+
+  <div class="case-sections">
+    <div class="case-section">
+      <h3 class="mono case-label">What</h3>
+      <p>{{ project.what }}</p>
+    </div>
+
+    <div class="case-section">
+      <h3 class="mono case-label">Key decisions</h3>
+      <ul>
+        {% for item in project.key_decisions %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    {% if project.shipped %}
+    <div class="case-section">
+      <h3 class="mono case-label">Shipped</h3>
+      <ul>
+        {% for item in project.shipped %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="case-section">
+      <h3 class="mono case-label">Next</h3>
+      <ul>
+        {% for item in project.next %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</article>
+{% endfor %}
+{% endblock %}
