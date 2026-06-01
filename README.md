@@ -1,10 +1,29 @@
 # keko-figueroa.dev
 
-Flask-based personal portfolio for [keko-figueroa.dev](https://keko-figueroa.dev) (Render + Cloudflare).
+Personal portfolio site for [keko-figueroa.dev](https://keko-figueroa.dev), built with Flask + Jinja and deployed on Render behind Cloudflare.
 
-**Positioning:** Back-end, Data & AI engineering—reliable systems, especially where money moves. Skills: Python, SQL, Linux.
+## What This Site Is
 
-## Local development
+This repository is a server-rendered portfolio focused on back-end/data/AI projects and case studies. The goal is fast load times, clear technical storytelling, and low operational overhead.
+
+**Live:** [https://keko-figueroa.dev](https://keko-figueroa.dev)
+
+## Design Goals
+
+- Fast first render (no SPA runtime required)
+- Minimal JavaScript (currently none)
+- Terminal-techy visual language without sacrificing readability
+- Content-as-code for transparent edits and review
+
+## Stack
+
+- Python 3.12
+- Flask + Jinja templates
+- Static CSS in `static/styles.css`
+- Gunicorn (production)
+- Render (hosting) + Cloudflare (DNS/SSL)
+
+## Local Development
 
 ```bash
 python3 -m venv .venv
@@ -14,63 +33,73 @@ export FLASK_APP=app.py
 flask run
 ```
 
-Open [http://127.0.0.1:5000](http://127.0.0.1:5000). Health check: [http://127.0.0.1:5000/health](http://127.0.0.1:5000/health).
+Open [http://127.0.0.1:5000](http://127.0.0.1:5000).
 
-## Deploy on Render
+Health check:
 
-1. Create a **Web Service** connected to this repo.
-2. Render detects Python via `runtime.txt` and starts the app with the `Procfile`.
-3. Gunicorn binds to `0.0.0.0:$PORT` (provided by Render).
-4. Point Cloudflare DNS (A/CNAME) at the Render service URL or custom domain.
+```bash
+curl http://127.0.0.1:5000/health
+```
 
-## Routes
+## Route Map
 
 | Route | Description |
-|-------|-------------|
-| `GET /` | Home — hero, featured projects, latest writing |
-| `GET /projects` | Project case studies |
+|---|---|
+| `GET /` | Home + featured projects + latest writing |
+| `GET /projects` | Project index (cards) |
+| `GET /projects/<slug>` | Project detail page |
 | `GET /blog` | Blog index |
-| `GET /blog/<slug>` | Single blog post (static, in-memory) |
-| `GET /about` | Bio, values, stack |
-| `GET /contact` | Email + GitHub links |
-| `GET /health` | JSON `{ "status": "ok" }` |
+| `GET /blog/<slug>` | Blog post detail |
+| `GET /about` | About page |
+| `GET /contact` | Contact page |
+| `GET /health` | JSON health endpoint |
 
-## Project lineup
+## Editing Project Content
 
-| Project | Status | Links |
-|---------|--------|-------|
-| Matrix-themed Sprint Planner | Public | [Demo](https://matrix-themed-sprint-planner.vercel.app) · [Repo](https://github.com/KekoFigueroa-dev/matrix-themed-sprint-planner) |
-| DEUNA Payments Flow | Public (docs-first) | [Repo](https://github.com/KekoFigueroa-dev/DEUNA-payments-flow) |
-| token_e-sports_betting | In progress | [Repo](https://github.com/KekoFigueroa-dev/token_e-sports_betting) |
+Project data is defined in `PROJECTS` inside `app.py`.
 
-Project data lives in `PROJECTS` inside `app.py`—edit there to update cards and case-study sections.
+Each project entry includes:
 
-## Blog (static-first)
+- `slug`, `title`, `type`, `status_label`
+- `short_summary`, `oneliner`
+- `live_url` and/or `repo_url` (optional)
+- detail sections used by `templates/project_detail.html`:
+  - `problem`, `what_it_is`, `constraints`
+  - `architecture`, `architecture_points`
+  - `key_decisions`, `what_shipped`, `what_next`, `notes`
 
-Seed posts are defined in `POSTS` inside `app.py`. No database or CMS—add entries to the list and redeploy. Future option: move to YAML/JSON file if the list grows.
+To add a project:
 
-## Hero visual (current + planned)
+1. Add a new object to `PROJECTS` in `app.py`
+2. Choose a unique `slug`
+3. Ensure section keys exist so the detail template renders cleanly
+4. Visit `/projects/<slug>` locally
 
-The centered square on the home page is **`static/profile.svg`** — a static SVG placeholder (green “KF” initials). It is not a photo yet.
+## Editing Blog Content
 
-To use a real profile photo, add **`static/profile.jpg`**; the app prefers it automatically.
+Blog entries are static-first and live in `POSTS` inside `app.py`.
 
-**Planned (Phase 2.5):** Replace this slot with a **hero slidedeck** — rotating slides with custom images for Home, Projects, Blog, About, and Contact. Details and constraints are in [AGENTS.md](AGENTS.md#hero-visual).
+To add a post:
 
-## Design
+1. Add an entry with `slug`, `title`, `date`, `excerpt`, and `body` (list of paragraphs)
+2. Check `/blog` and `/blog/<slug>` locally
 
-- Matrix-green terminal aesthetic; visual reference: [matrix-themed-sprint-planner](https://github.com/KekoFigueroa-dev/matrix-themed-sprint-planner)
-- Visible **grid overlay** (`.site-grid`) + CRT scanlines — CSS only, no JS
-- **Workflow:** test locally with `flask run` before any commit or push
+## Deploy Notes (Render + Cloudflare)
 
-## Architecture constraints
+- Render starts via `Procfile`:
+  - `web: gunicorn --bind 0.0.0.0:$PORT app:app`
+- Python version comes from `runtime.txt`
+- Cloudflare fronts the custom domain and TLS
 
-- Flask + Jinja templates, server-rendered
-- No database, no CMS
-- Minimal JS (none currently)
-- CSS in `static/styles.css`
-- Terminal-techy aesthetic (dark, matrix-green accent, monospace meta)
+See detailed deployment checklist in `docs/deploy.md`.
+
+## Additional Docs
+
+- `docs/architecture.md` — app structure and responsibilities
+- `docs/content-model.md` — PROJECTS/POSTS schema
+- `docs/deploy.md` — Render + Cloudflare checklist
+- `docs/decisions/` — short ADRs (why this architecture)
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE)

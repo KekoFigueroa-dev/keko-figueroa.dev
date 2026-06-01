@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.title }} — Keko-Figueroa.Dev{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <p class="mono post-date"><a href="{{ url_for('projects') }}">← Projects</a></p>
+  <h1>{{ project.title }}</h1>
+  <p class="page-lead">{{ project.short_summary }}</p>
+</section>
+
+<article class="case-study">
+  <div class="case-study-header">
+    <span class="badge">{{ project.status_label }}</span>
+    <p class="case-oneliner">{{ project.oneliner }}</p>
+    <div class="card-links">
+      {% if project.live_url %}
+      <a href="{{ project.live_url }}" target="_blank" rel="noopener noreferrer">Live demo</a>
+      {% endif %}
+      {% if project.repo_url %}
+      <a href="{{ project.repo_url }}" target="_blank" rel="noopener noreferrer">{{ project.repo_label or "Repo" }}</a>
+      {% elif project.repo_label %}
+      <span class="badge">{{ project.repo_label }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="case-sections">
+    <section class="case-section">
+      <h2 class="mono case-label">Problem</h2>
+      <p>{{ project.problem }}</p>
+    </section>
+
+    <section class="case-section">
+      <h2 class="mono case-label">What it is</h2>
+      <p>{{ project.what_it_is }}</p>
+    </section>
+
+    <section class="case-section">
+      <h2 class="mono case-label">Constraints</h2>
+      <ul>
+        {% for item in project.constraints %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="case-section">
+      <h2 class="mono case-label">Architecture</h2>
+      <p>{{ project.architecture }}</p>
+      {% if project.architecture_points %}
+      <ul>
+        {% for item in project.architecture_points %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </section>
+
+    <section class="case-section">
+      <h2 class="mono case-label">Key decisions</h2>
+      <ul>
+        {% for item in project.key_decisions %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="case-section">
+      <h2 class="mono case-label">What shipped</h2>
+      <ul>
+        {% for item in project.what_shipped %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="case-section">
+      <h2 class="mono case-label">What next</h2>
+      <ul>
+        {% for item in project.what_next %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    {% if project.notes %}
+    <section class="case-section">
+      <h2 class="mono case-label">Notes</h2>
+      <ul>
+        {% for item in project.notes %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+  </div>
+</article>
+{% endblock %}

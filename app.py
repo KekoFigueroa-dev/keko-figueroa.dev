@@ -4,11 +4,17 @@ from flask import Flask, abort, jsonify, render_template
 
 app = Flask(__name__)
 
+# Project content is intentionally in code (static-first). Keep slugs stable for URLs.
 PROJECTS = [
     {
         "slug": "matrix-themed-sprint-planner",
         "title": "Matrix-themed Sprint Planner",
-        "status": "public",
+        "type": "deployed",
+        "status_label": "Shipped",
+        "short_summary": (
+            "A production-depth sprint planner for small teams with deliberate "
+            "design, clear permissions, and real multi-user workflows."
+        ),
         "oneliner": (
             "A production-depth sprint planner for small teams with a deliberate "
             "design system and a real permission model."
@@ -18,34 +24,54 @@ PROJECTS = [
         "key_points": [
             "React + TypeScript (CRA)",
             "Supabase Auth + Postgres + RLS (permissions enforced at data layer)",
-            "Workspace bootstrap via RPC patterns",
             "Domain model: Workspace → Project → Sprint → Task",
-            "Strong docs: spec phases, permission matrix, QA/ship guides",
         ],
-        "what": (
-            "A sprint planning tool for small teams that treats permissions and "
-            "data integrity as first-class concerns—not afterthoughts bolted onto "
-            "a UI prototype."
+        "problem": (
+            "Small teams often run planning in tools that look good in demos but "
+            "break down on roles, accountability, and data integrity."
         ),
+        "what_it_is": (
+            "A sprint planner focused on production realities: role-aware access, "
+            "clear data model boundaries, and docs that make onboarding/review fast."
+        ),
+        "constraints": [
+            "Multi-user permissions had to be enforceable beyond UI state.",
+            "MVP needed enough depth to demonstrate end-to-end product judgment.",
+            "Performance and developer velocity had to stay practical on Vercel + Supabase.",
+        ],
+        "architecture": (
+            "Client-heavy app on React/TypeScript with Supabase Auth + Postgres as "
+            "source of truth; permission boundaries enforced through RLS and RPC patterns."
+        ),
+        "architecture_points": [
+            "Frontend: React + TypeScript (CRA)",
+            "Backend/data: Supabase Auth + Postgres + RLS",
+            "Core domain: Workspace → Project → Sprint → Task",
+        ],
         "key_decisions": [
             "RLS policies enforce workspace roles at the database layer, not just the UI.",
-            "RPC-based workspace bootstrap keeps onboarding atomic and auditable.",
-            "Domain hierarchy (Workspace → Project → Sprint → Task) mirrors how teams actually work.",
+            "Workspace bootstrap handled via RPC for atomic setup.",
+            "Documentation ships with code (specs, permission matrix, QA guides).",
         ],
-        "shipped": [
-            "Full auth flow with role-based access (owner, admin, member, viewer).",
-            "Sprint board with drag-and-drop task management.",
-            "Permission matrix documentation and phased spec guides.",
+        "what_shipped": [
+            "Role-based auth and multi-user workspace support.",
+            "Sprint/task flows with robust project hierarchy.",
+            "Polished matrix visual system and reviewer-friendly docs.",
         ],
-        "next": [
-            "Burndown charts and velocity tracking.",
-            "Notification hooks for sprint events.",
+        "what_next": [
+            "Velocity/burndown insights for planning quality.",
+            "More team automation hooks around sprint lifecycle events.",
         ],
     },
     {
         "slug": "deuna-payments-flow",
         "title": "DEUNA Payments Flow (Case Study)",
-        "status": "public",
+        "type": "case_study",
+        "status_label": "Case study",
+        "short_summary": (
+            "A documentation-first payments integration + troubleshooting case "
+            "study focused on orchestrator mishaps and practical RCA."
+        ),
         "oneliner": (
             "A documentation-first payments integration + troubleshooting case study—"
             "meant to help teams navigate the common mishaps of working with a "
@@ -54,77 +80,177 @@ PROJECTS = [
         "live_url": None,
         "repo_url": "https://github.com/KekoFigueroa-dev/DEUNA-payments-flow",
         "repo_label": "Repo",
-        "note": "This repo is a case study and playbook. It is not a deployed payment app.",
         "key_points": [
-            "Step-by-step request shapes for the core flow (user → auth → order → purchase v1/v2 → refund)",
-            "What can go wrong: sandbox inconsistencies, schema mismatches, PSP/issuer declines",
-            "A data-first RCA approach using example SQL patterns",
+            "Core flow request shapes (user → auth → order → purchase v1/v2 → refund)",
+            "Failure map: sandbox inconsistencies, schema mismatches, PSP/issuer declines",
+            "Data-first RCA with SQL analysis patterns",
         ],
-        "what": (
-            "A documentation-first integration and troubleshooting playbook for teams "
-            "working with a payment orchestrator. It clarifies request/response "
-            "shapes and failure investigation patterns without claiming to be a live "
-            "checkout implementation."
+        "problem": (
+            "Teams integrating with orchestrators often lose time in ambiguous docs, "
+            "inconsistent sandbox behavior, and unclear failure ownership."
         ),
+        "what_it_is": (
+            "A documentation-first case study and playbook for integration and "
+            "troubleshooting workflows around DEUNA and downstream providers."
+        ),
+        "constraints": [
+            "Must stay practical for operators under incident pressure.",
+            "Needs to be useful without a full product UI around it.",
+            "Has to connect request shapes with real-world failure diagnostics.",
+        ],
+        "architecture": (
+            "Structured docs + request collections + SQL examples, organized as an "
+            "operational troubleshooting reference instead of a deployed app."
+        ),
+        "architecture_points": [
+            "requests/: step-by-step flow examples",
+            "sql/: incident and decline analysis queries",
+            "troubleshooting guide: DEUNA → PSP → issuer/network",
+        ],
         "key_decisions": [
-            "Treat this as a case study/playbook instead of a deployed app.",
-            "Organize by flow sequence (user → auth → order → purchase → refund), not endpoint list.",
-            "Pair integration guidance with troubleshooting paths (DEUNA → PSP → issuer/network).",
+            "Treat this as a case study/playbook, not a deployed checkout.",
+            "Organize by end-to-end flow sequence, not endpoint catalog.",
+            "Pair request examples with failure patterns and RCA queries.",
         ],
-        "shipped": [
-            "Request-shape walkthroughs for core purchase and refund flow (v1/v2).",
-            "Troubleshooting reference for sandbox mismatches and decline analysis.",
-            "SQL examples for incident windows and root-cause analysis.",
+        "what_shipped": [
+            "Step-by-step request-shape guidance for core payment/refund flow.",
+            "Common failure scenarios and where to investigate first.",
+            "SQL templates for declines, incident windows, and V2 anomalies.",
         ],
-        "next": [
-            "Extend playbook with webhook replay scenarios and idempotency examples.",
-            "Add deeper settlement/reconciliation templates for ops workflows.",
+        "what_next": [
+            "Expand webhook replay and idempotency troubleshooting.",
+            "Add deeper reconciliation templates for settlement operations.",
+        ],
+        "notes": [
+            "This repo is a case study and playbook. It is not a deployed payment app.",
+            "Purpose: help teams navigate common mishaps when integrating with a payment orchestrator.",
         ],
     },
     {
         "slug": "token-e-sports-betting",
         "title": "token_e-sports_betting (Token_name_esports)",
-        "status": "in_progress",
+        "type": "private",
+        "status_label": "In progress",
+        "short_summary": (
+            "Sandbox-first e-sports betting MVP validating wallet + betting + "
+            "settlement while keeping payments architecture production-ready."
+        ),
         "oneliner": (
             "Sandbox e-sports betting MVP built to prove the core loop (wallet + "
             "betting + settlement) while keeping the system payment-ready from day one."
         ),
         "live_url": None,
+        # Private repository: no public URL by design.
         "repo_url": None,
-        "repo_label": "Private repo (details on request)",
-        "subtitle": (
-            "Sandbox e-sports betting MVP built to prove the core loop (wallet + "
-            "betting + settlement) while keeping the system payment-ready from day one."
-        ),
-        "note": (
-            "Current state: In progress (active build). More screenshots and a "
-            "public write-up will be added later."
-        ),
+        "repo_label": "Private repo",
         "key_points": [
-            "Sandbox-first: test balances only at first",
-            "Tokens are internal test units (not real money, not crypto, not withdrawable cash)",
-            "Payments are designed around Nuvei (test mode) so going live later is a controlled step, not a rewrite",
+            "Sandbox-first tokens (not real money, not crypto, not withdrawable cash)",
+            "Nuvei included as orchestrator from day one in test mode",
+            "Monorepo with frontend/, django-backend/, docs/, infra/",
         ],
-        "what": (
-            "Even if we start sandbox-only, it is crucial that we treat Nuvei as "
-            "the payment orchestrator from the beginning (using test mode), so the "
-            "architecture and data model don't paint us into a corner."
+        "problem": (
+            "Betting MVPs often prototype too quickly, then need painful rewrites when "
+            "wallet and payment constraints become real."
         ),
-        "key_decisions": [
+        "what_it_is": (
+            "A sandbox e-sports betting MVP to prove the full loop—wallet, betting, "
+            "settlement—while preserving a path to production payments."
+        ),
+        "constraints": [
+            "Sandbox-first launch only (no real funds).",
+            "Needs payment-grade controls even before go-live.",
+            "Must remain implementation-friendly as a solo build.",
+        ],
+        "architecture": (
+            "Split web and API apps in a monorepo, with payment and data contracts "
+            "documented early to avoid cornering future production rollout."
+        ),
+        "architecture_points": [
             "Frontend: Next.js + TypeScript",
             "Backend: Django + Django REST Framework",
             "Auth: Django sessions",
             "Database: PostgreSQL",
             "Match data (initial): GRID Open Access API",
-            "Payments (orchestrator): Nuvei (test mode from early MVP)",
-            "Repo: Monorepo (frontend/ + django-backend/)",
+            "Payments orchestrator: Nuvei (test mode from early MVP)",
+            "Repo shape: frontend/ + django-backend/ + docs/ + infra/",
         ],
-        "shipped": [],
-        "next": [
-            "frontend/ — Next.js app",
-            "django-backend/ — Django app + API",
-            "docs/ — product + architecture + API contracts + compliance notes",
-            "infra/ — deployment/ops planning notes",
+        "key_decisions": [
+            "Treat internal tokens as test units only (no real money semantics).",
+            "Model payment orchestration early with Nuvei test mode, not as a late integration.",
+            "Design wallet and settlement flows for traceability from day one.",
+        ],
+        "what_shipped": [
+            "Core architecture skeleton and contracts for wallet + betting loop.",
+            "Sandbox-first operational framing and payments integration plan.",
+        ],
+        "what_next": [
+            "Public write-up and screenshots once milestones stabilize.",
+            "Incremental hardening of ledger/idempotency/reconciliation paths.",
+        ],
+        "notes": [
+            "Private repo — summary available here, details on request.",
+            "Current state: in progress (active build).",
+        ],
+    },
+    {
+        "slug": "keko-figueroa-dev-portfolio",
+        "title": "keko-figueroa.dev",
+        "type": "this_site",
+        "status_label": "Live",
+        "short_summary": (
+            "The portfolio itself: server-rendered Flask/Jinja site built for speed, "
+            "clarity, and honest project storytelling."
+        ),
+        "oneliner": (
+            "A fast, server-rendered portfolio built with Flask + Jinja to showcase "
+            "back-end/data/AI work without front-end bloat."
+        ),
+        "live_url": "https://keko-figueroa.dev",
+        "repo_url": "https://github.com/KekoFigueroa-dev/keko-figueroa.dev",
+        "repo_label": "Repo",
+        "key_points": [
+            "Flask + Jinja + static CSS (no CMS, no database)",
+            "Terminal-techy matrix aesthetic with minimal JS",
+            "Content-as-code for projects and blog posts",
+        ],
+        "problem": (
+            "Most portfolios look polished but hide technical depth. I needed one that "
+            "is fast, maintainable, and explicit about engineering trade-offs."
+        ),
+        "what_it_is": (
+            "A production-ready personal site that doubles as a case study in practical "
+            "web architecture choices and clear technical communication."
+        ),
+        "constraints": [
+            "Keep stack simple and deployment-friendly (Render + Cloudflare).",
+            "Avoid DB/CMS overhead for content that changes infrequently.",
+            "Preserve speed and readability across desktop and mobile.",
+        ],
+        "architecture": (
+            "Server-rendered Flask routes with Jinja templates, static CSS for the "
+            "visual system, and in-memory content models in Python."
+        ),
+        "architecture_points": [
+            "App entry: app.py",
+            "Templates: templates/",
+            "Styles: static/styles.css",
+            "Content source: PROJECTS + POSTS in code",
+        ],
+        "key_decisions": [
+            "Flask/Jinja over SPA for performance, simplicity, and maintenance.",
+            "Minimal JS to reduce failure modes and keep first render fast.",
+            "No database; projects/posts are code-reviewed content.",
+            "Deploy on Render with Cloudflare for DNS/SSL and straightforward ops.",
+        ],
+        "what_shipped": [
+            "Phase 2: full site routes, project cards, blog, and terminal aesthetic.",
+            "Phase 3: project detail pages and improved docs/ADRs.",
+            "Operational baseline: /health endpoint, Render-ready config, mobile-friendly UI.",
+        ],
+        "what_next": [
+            "Phase 2.5 hero visual slidedeck.",
+            "Optional contact form with light anti-spam controls.",
+            "Continuous polishing of case-study depth and writing.",
         ],
     },
 ]
@@ -246,6 +372,15 @@ def home():
 @app.route("/projects")
 def projects():
     return render_template("projects.html", projects=PROJECTS)
+
+
+@app.route("/projects/<slug>")
+def project_detail(slug):
+    # Unknown slugs intentionally return the global 404 template.
+    project = next((p for p in PROJECTS if p["slug"] == slug), None)
+    if project is None:
+        abort(404)
+    return render_template("project_detail.html", project=project)
 
 
 @app.route("/about")

@@ -25,11 +25,11 @@
   <div class="card-grid">
     {% for project in projects %}
     <article class="card">
-      {% if project.status == "in_progress" %}
-      <span class="badge badge-progress">In progress</span>
+      {% if project.type == "private" %}
+      <span class="badge badge-progress">Private repo</span>
       {% endif %}
-      <h3 class="card-title">{{ project.title }}</h3>
-      <p class="card-oneliner">{{ project.oneliner }}</p>
+      <h3 class="card-title"><a href="{{ url_for('project_detail', slug=project.slug) }}">{{ project.title }}</a></h3>
+      <p class="card-oneliner">{{ project.short_summary }}</p>
       <ul class="card-points">
         {% for point in project.key_points[:3] %}
         <li>{{ point }}</li>
@@ -44,6 +44,7 @@
         {% elif project.repo_label %}
         <span class="badge">{{ project.repo_label }}</span>
         {% endif %}
+        <a href="{{ url_for('project_detail', slug=project.slug) }}">Read case study</a>
       </div>
     </article>
     {% endfor %}
