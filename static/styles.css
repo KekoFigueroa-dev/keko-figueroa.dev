@@ -678,10 +678,19 @@ a:hover {
   color: var(--text-0);
 }
 
-.contact-email-plain {
-  margin: 0.75rem 0 0;
+.contact-links {
+  margin-bottom: 1.5rem;
+}
+
+.contact-form-intro {
+  margin-bottom: 1rem;
+}
+
+.contact-cta {
+  margin: 0.35rem 0 0;
   color: var(--text-1);
-  font-size: 0.95rem;
+  font-size: 0.98rem;
+  line-height: 1.55;
 }
 
 .contact-form-wrap {
@@ -793,10 +802,6 @@ a:hover {
   background: rgba(255, 59, 59, 0.08);
   border-color: rgba(255, 59, 59, 0.35);
   color: #ffc4c4;
-}
-
-.contact-links {
-  margin-top: 1rem;
 }
 
 /* ── 404 ── */
