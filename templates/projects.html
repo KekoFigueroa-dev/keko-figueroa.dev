@@ -10,12 +10,25 @@
 
 <div class="card-grid">
   {% for project in projects %}
+  {% set primary_cta = "Open project page →" %}
+  {% if project.type == "case_study" %}
+    {% set primary_cta = "Read case study →" %}
+  {% elif project.type == "this_site" %}
+    {% set primary_cta = "View project →" %}
+  {% endif %}
   <article class="card">
-    {% if project.type == "private" %}
-    <span class="badge badge-progress">Private repo</span>
-    {% else %}
-    <span class="badge">{{ project.status_label }}</span>
-    {% endif %}
+    <ul class="badge-list" aria-label="Project badges">
+      <li><span class="badge">{{ project.status_label }}</span></li>
+      {% if project.type == "private" %}
+      <li><span class="badge badge-progress">Private repo</span></li>
+      {% endif %}
+      {% if project.live_url %}
+      <li><a class="badge badge-link" href="{{ project.live_url }}" target="_blank" rel="noopener noreferrer">Live</a></li>
+      {% endif %}
+      {% if project.repo_url %}
+      <li><a class="badge badge-link" href="{{ project.repo_url }}" target="_blank" rel="noopener noreferrer">Repo</a></li>
+      {% endif %}
+    </ul>
     <h2 class="card-title"><a href="{{ url_for('project_detail', slug=project.slug) }}">{{ project.title }}</a></h2>
     <p class="card-oneliner">{{ project.short_summary }}</p>
     <ul class="card-points">
@@ -23,17 +36,7 @@
       <li>{{ point }}</li>
       {% endfor %}
     </ul>
-    <div class="card-links">
-      {% if project.live_url %}
-      <a href="{{ project.live_url }}" target="_blank" rel="noopener noreferrer">Live demo</a>
-      {% endif %}
-      {% if project.repo_url %}
-      <a href="{{ project.repo_url }}" target="_blank" rel="noopener noreferrer">{{ project.repo_label or "Repo" }}</a>
-      {% elif project.repo_label %}
-      <span class="badge">{{ project.repo_label }}</span>
-      {% endif %}
-      <a href="{{ url_for('project_detail', slug=project.slug) }}">Open project page</a>
-    </div>
+    <a class="card-primary-cta" href="{{ url_for('project_detail', slug=project.slug) }}">{{ primary_cta }}</a>
   </article>
   {% endfor %}
 </div>

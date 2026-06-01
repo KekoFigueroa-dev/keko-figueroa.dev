@@ -377,10 +377,18 @@ def projects():
 @app.route("/projects/<slug>")
 def project_detail(slug):
     # Unknown slugs intentionally return the global 404 template.
-    project = next((p for p in PROJECTS if p["slug"] == slug), None)
-    if project is None:
+    project_index = next((i for i, p in enumerate(PROJECTS) if p["slug"] == slug), None)
+    if project_index is None:
         abort(404)
-    return render_template("project_detail.html", project=project)
+    project = PROJECTS[project_index]
+    prev_project = PROJECTS[project_index - 1] if project_index > 0 else None
+    next_project = PROJECTS[project_index + 1] if project_index < len(PROJECTS) - 1 else None
+    return render_template(
+        "project_detail.html",
+        project=project,
+        prev_project=prev_project,
+        next_project=next_project,
+    )
 
 
 @app.route("/about")

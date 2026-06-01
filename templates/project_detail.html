@@ -4,7 +4,7 @@
 
 {% block content %}
 <section class="page-header">
-  <p class="mono post-date"><a href="{{ url_for('projects') }}">← Projects</a></p>
+  <p class="mono post-date"><a class="back-link" href="{{ url_for('projects') }}">← Back to projects</a></p>
   <h1>{{ project.title }}</h1>
   <p class="page-lead">{{ project.short_summary }}</p>
 </section>
@@ -96,4 +96,19 @@
     {% endif %}
   </div>
 </article>
+
+<nav class="project-pager" aria-label="Project pagination">
+  {% if prev_project %}
+  <a class="project-pager-link project-pager-prev" href="{{ url_for('project_detail', slug=prev_project.slug) }}">
+    <span class="mono">← Previous</span>
+    <span>{{ prev_project.title }}</span>
+  </a>
+  {% endif %}
+  {% if next_project %}
+  <a class="project-pager-link project-pager-next" href="{{ url_for('project_detail', slug=next_project.slug) }}">
+    <span class="mono">Next →</span>
+    <span>{{ next_project.title }}</span>
+  </a>
+  {% endif %}
+</nav>
 {% endblock %}

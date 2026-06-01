@@ -24,6 +24,12 @@
   <h2 class="section-title">Featured Projects</h2>
   <div class="card-grid">
     {% for project in projects %}
+    {% set primary_cta = "Open project page →" %}
+    {% if project.type == "case_study" %}
+      {% set primary_cta = "Read case study →" %}
+    {% elif project.type == "this_site" %}
+      {% set primary_cta = "View project →" %}
+    {% endif %}
     <article class="card">
       {% if project.type == "private" %}
       <span class="badge badge-progress">Private repo</span>
@@ -44,7 +50,7 @@
         {% elif project.repo_label %}
         <span class="badge">{{ project.repo_label }}</span>
         {% endif %}
-        <a href="{{ url_for('project_detail', slug=project.slug) }}">Read case study</a>
+        <a class="card-primary-cta" href="{{ url_for('project_detail', slug=project.slug) }}">{{ primary_cta }}</a>
       </div>
     </article>
     {% endfor %}

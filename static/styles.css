@@ -391,6 +391,15 @@ a:hover {
   color: var(--matrix-0);
 }
 
+.badge-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+
 /* ── Badges ── */
 .badge {
   display: inline-block;
@@ -407,6 +416,50 @@ a:hover {
   background: rgba(255, 207, 90, 0.1);
   color: #ffcf5a;
   border: 1px solid rgba(255, 207, 90, 0.35);
+}
+
+.badge-link {
+  border: 1px solid var(--border-0);
+  color: var(--text-1);
+  text-decoration: none;
+}
+
+.badge-link:hover {
+  color: var(--matrix-0);
+  border-color: var(--border-bright);
+  text-decoration: none;
+}
+
+.card-primary-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--border-0);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-0);
+  text-decoration: none;
+  width: fit-content;
+}
+
+.card-primary-cta:hover {
+  color: var(--matrix-0);
+  border-color: var(--border-bright);
+  text-decoration: none;
+}
+
+.card a:focus-visible,
+.card-primary-cta:focus-visible,
+.badge-link:focus-visible,
+.back-link:focus-visible,
+.project-pager-link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 /* ── Case studies ── */
@@ -637,6 +690,37 @@ a:hover {
   font-size: 3rem;
   color: var(--cta-0);
   text-shadow: 0 0 30px rgba(255, 59, 59, 0.3);
+}
+
+.project-pager {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.project-pager-link {
+  flex: 1 1 15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px dashed var(--border-0);
+  border-radius: 8px;
+  color: var(--text-0);
+  text-decoration: none;
+}
+
+.project-pager-link:hover {
+  border-color: var(--border-bright);
+  color: var(--matrix-0);
+  text-decoration: none;
+}
+
+.project-pager-next {
+  text-align: right;
+  align-items: flex-end;
 }
 
 /* ── Mobile ── */
