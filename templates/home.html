@@ -39,7 +39,11 @@
         {% if project.live_url %}
         <a href="{{ project.live_url }}" target="_blank" rel="noopener noreferrer">Live demo</a>
         {% endif %}
-        <a href="{{ project.repo_url }}" target="_blank" rel="noopener noreferrer">Repo</a>
+        {% if project.repo_url %}
+        <a href="{{ project.repo_url }}" target="_blank" rel="noopener noreferrer">{{ project.repo_label or "Repo" }}</a>
+        {% elif project.repo_label %}
+        <span class="badge">{{ project.repo_label }}</span>
+        {% endif %}
       </div>
     </article>
     {% endfor %}

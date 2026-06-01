@@ -44,69 +44,87 @@ PROJECTS = [
     },
     {
         "slug": "deuna-payments-flow",
-        "title": "DEUNA Payments Flow",
+        "title": "DEUNA Payments Flow (Case Study)",
         "status": "public",
         "oneliner": (
-            "A payments integration + troubleshooting exercise documenting request "
-            "shapes and a data-first RCA approach."
+            "A documentation-first payments integration + troubleshooting case study—"
+            "meant to help teams navigate the common mishaps of working with a "
+            "payment orchestrator."
         ),
         "live_url": None,
         "repo_url": "https://github.com/KekoFigueroa-dev/DEUNA-payments-flow",
+        "repo_label": "Repo",
+        "note": "This repo is a case study and playbook. It is not a deployed payment app.",
         "key_points": [
-            "requests/ folder: step-by-step HTTP requests for main payment flow",
-            "sql/ folder: example queries for declines, incident windows, V2 failure patterns",
-            "Troubleshooting guide: DEUNA → PSP → issuer/network",
+            "Step-by-step request shapes for the core flow (user → auth → order → purchase v1/v2 → refund)",
+            "What can go wrong: sandbox inconsistencies, schema mismatches, PSP/issuer declines",
+            "A data-first RCA approach using example SQL patterns",
         ],
         "what": (
-            "A docs-first payments integration reference that maps the full request "
-            "lifecycle—from authorization to settlement—and provides SQL queries for "
-            "incident investigation."
+            "A documentation-first integration and troubleshooting playbook for teams "
+            "working with a payment orchestrator. It clarifies request/response "
+            "shapes and failure investigation patterns without claiming to be a live "
+            "checkout implementation."
         ),
         "key_decisions": [
-            "Organize by payment flow step, not by API endpoint alphabetically.",
-            "Pair every request example with the expected response shape and failure modes.",
-            "SQL queries target real incident patterns: declines, V2 failures, time windows.",
+            "Treat this as a case study/playbook instead of a deployed app.",
+            "Organize by flow sequence (user → auth → order → purchase → refund), not endpoint list.",
+            "Pair integration guidance with troubleshooting paths (DEUNA → PSP → issuer/network).",
         ],
         "shipped": [
-            "Step-by-step HTTP request collection for the main payment flow.",
-            "Example SQL for decline analysis and incident window queries.",
-            "Troubleshooting guide covering DEUNA → PSP → issuer/network chain.",
+            "Request-shape walkthroughs for core purchase and refund flow (v1/v2).",
+            "Troubleshooting reference for sandbox mismatches and decline analysis.",
+            "SQL examples for incident windows and root-cause analysis.",
         ],
         "next": [
-            "Webhook replay scenarios and idempotency key examples.",
-            "Settlement reconciliation query templates.",
+            "Extend playbook with webhook replay scenarios and idempotency examples.",
+            "Add deeper settlement/reconciliation templates for ops workflows.",
         ],
     },
     {
         "slug": "token-e-sports-betting",
-        "title": "token_e-sports_betting",
+        "title": "token_e-sports_betting (Token_name_esports)",
         "status": "in_progress",
         "oneliner": (
-            "Sandbox e-sports betting MVP proving wallet + betting + settlement, "
-            "designed to be payment-ready with Nuvei (test mode) from day one."
+            "Sandbox e-sports betting MVP built to prove the core loop (wallet + "
+            "betting + settlement) while keeping the system payment-ready from day one."
         ),
         "live_url": None,
-        "repo_url": "https://github.com/KekoFigueroa-dev/token_e-sports_betting",
+        "repo_url": None,
+        "repo_label": "Private repo (details on request)",
+        "subtitle": (
+            "Sandbox e-sports betting MVP built to prove the core loop (wallet + "
+            "betting + settlement) while keeping the system payment-ready from day one."
+        ),
+        "note": (
+            "Current state: In progress (active build). More screenshots and a "
+            "public write-up will be added later."
+        ),
         "key_points": [
-            "Next.js + TypeScript; Django + DRF; Postgres; GRID Open Access API; Nuvei (test mode)",
-            "Ledger-based wallet",
-            "Idempotency",
-            "Traceability",
+            "Sandbox-first: test balances only at first",
+            "Tokens are internal test units (not real money, not crypto, not withdrawable cash)",
+            "Payments are designed around Nuvei (test mode) so going live later is a controlled step, not a rewrite",
         ],
         "what": (
-            "A sandbox e-sports betting MVP that proves the full money loop—wallet, "
-            "bet placement, settlement—built payment-ready from day one."
+            "Even if we start sandbox-only, it is crucial that we treat Nuvei as "
+            "the payment orchestrator from the beginning (using test mode), so the "
+            "architecture and data model don't paint us into a corner."
         ),
         "key_decisions": [
-            "Ledger-based wallet for auditability over simple balance fields.",
-            "Idempotency keys on all money-moving operations.",
-            "Nuvei test-mode integration planned from the architecture phase.",
+            "Frontend: Next.js + TypeScript",
+            "Backend: Django + Django REST Framework",
+            "Auth: Django sessions",
+            "Database: PostgreSQL",
+            "Match data (initial): GRID Open Access API",
+            "Payments (orchestrator): Nuvei (test mode from early MVP)",
+            "Repo: Monorepo (frontend/ + django-backend/)",
         ],
         "shipped": [],
         "next": [
-            "Wallet ledger schema and deposit/withdraw flows.",
-            "Bet placement with GRID Open Access API integration.",
-            "Settlement engine and Nuvei test-mode hookup.",
+            "frontend/ — Next.js app",
+            "django-backend/ — Django app + API",
+            "docs/ — product + architecture + API contracts + compliance notes",
+            "infra/ — deployment/ops planning notes",
         ],
     },
 ]
