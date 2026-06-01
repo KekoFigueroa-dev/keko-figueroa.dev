@@ -678,6 +678,127 @@ a:hover {
   color: var(--text-0);
 }
 
+.contact-email-plain {
+  margin: 0.75rem 0 0;
+  color: var(--text-1);
+  font-size: 0.95rem;
+}
+
+.contact-form-wrap {
+  margin-bottom: 2rem;
+}
+
+.contact-form {
+  background: var(--bg-1);
+  border: 1px solid var(--border-0);
+  border-radius: 10px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-label {
+  color: var(--matrix-0);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.form-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  color: var(--text-0);
+  background: var(--bg-0);
+  border: 1px solid var(--border-0);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--matrix-0);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.form-select {
+  appearance: none;
+  cursor: pointer;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 8rem;
+  line-height: 1.5;
+}
+
+.form-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.form-submit {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-0);
+  background: transparent;
+  border: 1px solid var(--border-0);
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+
+.form-submit:hover {
+  color: var(--matrix-0);
+  border-color: var(--border-bright);
+}
+
+.form-submit:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.form-alert {
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-0);
+}
+
+.form-alert p {
+  margin: 0;
+  color: var(--text-1);
+}
+
+.form-alert-success {
+  background: rgba(0, 255, 65, 0.06);
+  border-color: var(--border-bright);
+}
+
+.form-alert-error {
+  background: rgba(255, 59, 59, 0.08);
+  border-color: rgba(255, 59, 59, 0.35);
+  color: #ffc4c4;
+}
+
+.contact-links {
+  margin-top: 1rem;
+}
+
 /* ── 404 ── */
 .error-page {
   text-align: center;

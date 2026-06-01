@@ -1,8 +1,24 @@
 import os
+import time
+from datetime import datetime, timezone
 
-from flask import Flask, abort, jsonify, render_template
+import requests
+from flask import Flask, abort, jsonify, render_template, request
 
 app = Flask(__name__)
+
+CONTACT_INTENTS = [
+    "Work opportunity",
+    "Project question",
+    "Writing/speaking",
+    "Other",
+]
+
+# In-memory rate limit: IP -> list of submission timestamps (pruned hourly).
+_contact_rate_limit: dict[str, list[float]] = {}
+CONTACT_RATE_LIMIT = 5
+CONTACT_RATE_WINDOW = 3600
+POSTMARK_API_URL = "https://api.postmarkapp.com/email"
 
 # Project content is intentionally in code (static-first). Keep slugs stable for URLs.
 PROJECTS = [
@@ -396,9 +412,131 @@ def about():
     return render_template("about.html")
 
 
-@app.route("/contact")
+def _client_ip() -> str:
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.remote_addr or "unknown"
+
+
+def _rate_limit_exceeded(ip: str) -> bool:
+    now = time.time()
+    hits = _contact_rate_limit.setdefault(ip, [])
+    _contact_rate_limit[ip] = [t for t in hits if now - t < CONTACT_RATE_WINDOW]
+    return len(_contact_rate_limit[ip]) >= CONTACT_RATE_LIMIT
+
+
+def _record_submission(ip: str) -> None:
+    _contact_rate_limit.setdefault(ip, []).append(time.time())
+
+
+def _validate_contact_form(form: dict) -> str | None:
+    name = (form.get("name") or "").strip()
+    email = (form.get("email") or "").strip()
+    intent = (form.get("intent") or "").strip()
+    message = (form.get("message") or "").strip()
+
+    if not name or len(name) > 120:
+        return "Please enter a name (max 120 characters)."
+    if not email or len(email) > 254 or "@" not in email:
+        return "Please enter a valid email address."
+    if intent not in CONTACT_INTENTS:
+        return "Please select an intent."
+    if not message or len(message) < 10 or len(message) > 5000:
+        return "Please enter a message (10–5000 characters)."
+    return None
+
+
+def _send_contact_email(name: str, email: str, intent: str, message: str) -> bool:
+    token = os.environ.get("POSTMARK_SERVER_TOKEN")
+    from_email = os.environ.get("CONTACT_FROM_EMAIL")
+    to_email = os.environ.get("CONTACT_TO_EMAIL")
+    subject_prefix = os.environ.get("CONTACT_SUBJECT_PREFIX", "[keko-figueroa.dev]")
+
+    if not token or not from_email or not to_email:
+        return False
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    text_body = (
+        f"Name: {name}\n"
+        f"Email: {email}\n"
+        f"Intent: {intent}\n"
+        f"Message:\n{message}\n\n"
+        f"---\n"
+        f"Timestamp: {timestamp}\n"
+        f"IP: {_client_ip()}\n"
+        f"User-Agent: {request.headers.get('User-Agent', 'unknown')}\n"
+    )
+
+    response = requests.post(
+        POSTMARK_API_URL,
+        headers={
+            "X-Postmark-Server-Token": token,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        json={
+            "From": from_email,
+            "To": to_email,
+            "ReplyTo": email,
+            "Subject": f"{subject_prefix} {intent} — {name}",
+            "TextBody": text_body,
+        },
+        timeout=10,
+    )
+    return response.ok
+
+
+@app.route("/contact", methods=["GET", "POST"])
 def contact():
-    return render_template("contact.html")
+    form_values = {"name": "", "email": "", "intent": "", "message": ""}
+    form_success = False
+    form_error = None
+
+    if request.method == "POST":
+        form_values = {
+            "name": (request.form.get("name") or "").strip(),
+            "email": (request.form.get("email") or "").strip(),
+            "intent": (request.form.get("intent") or "").strip(),
+            "message": (request.form.get("message") or "").strip(),
+        }
+
+        # Honeypot: bots get a fake success; no email sent.
+        if (request.form.get("company") or "").strip():
+            form_success = True
+        else:
+            client_ip = _client_ip()
+            if _rate_limit_exceeded(client_ip):
+                form_error = (
+                    "Too many messages from this address. "
+                    "Please try again later or email me directly."
+                )
+            else:
+                validation_error = _validate_contact_form(form_values)
+                if validation_error:
+                    form_error = validation_error
+                elif not _send_contact_email(
+                    form_values["name"],
+                    form_values["email"],
+                    form_values["intent"],
+                    form_values["message"],
+                ):
+                    form_error = (
+                        "Couldn't send right now. "
+                        f"Email me directly at {os.environ.get('CONTACT_TO_EMAIL', 'keko@keko-figueroa.dev')}."
+                    )
+                else:
+                    _record_submission(client_ip)
+                    form_success = True
+                    form_values = {"name": "", "email": "", "intent": "", "message": ""}
+
+    return render_template(
+        "contact.html",
+        contact_intents=CONTACT_INTENTS,
+        form_values=form_values,
+        form_success=form_success,
+        form_error=form_error,
+    )
 
 
 @app.route("/blog")
