@@ -1,9 +1,9 @@
 import os
-import time
 from datetime import datetime, timezone
 
 import requests
 from flask import Flask, abort, jsonify, render_template, request
+from flask_limiter import Limiter
 
 app = Flask(__name__)
 
@@ -14,11 +14,31 @@ CONTACT_INTENTS = [
     "Other",
 ]
 
-# In-memory rate limit: IP -> list of submission timestamps (pruned hourly).
-_contact_rate_limit: dict[str, list[float]] = {}
-CONTACT_RATE_LIMIT = 5
-CONTACT_RATE_WINDOW = 3600
 POSTMARK_API_URL = "https://api.postmarkapp.com/email"
+TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+
+
+def _client_ip() -> str:
+    """Client IP for rate limits and audit trail.
+
+    Cloudflare sets CF-Connecting-IP; Render/proxies may set X-Forwarded-For
+    (first hop only — leftmost is the original client).
+    """
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    if cf_ip:
+        return cf_ip.strip()
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.remote_addr or "unknown"
+
+
+limiter = Limiter(
+    key_func=_client_ip,
+    app=app,
+    default_limits=[],
+    storage_uri="memory://",
+)
 
 # Project content is intentionally in code (static-first). Keep slugs stable for URLs.
 PROJECTS = [
@@ -412,22 +432,45 @@ def about():
     return render_template("about.html")
 
 
-def _client_ip() -> str:
-    forwarded = request.headers.get("X-Forwarded-For", "")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.remote_addr or "unknown"
+def _turnstile_enabled() -> bool:
+    return os.environ.get("TURNSTILE_ENABLED", "").lower() in ("true", "1", "yes")
 
 
-def _rate_limit_exceeded(ip: str) -> bool:
-    now = time.time()
-    hits = _contact_rate_limit.setdefault(ip, [])
-    _contact_rate_limit[ip] = [t for t in hits if now - t < CONTACT_RATE_WINDOW]
-    return len(_contact_rate_limit[ip]) >= CONTACT_RATE_LIMIT
+def _turnstile_active() -> bool:
+    return _turnstile_enabled() and bool(os.environ.get("TURNSTILE_SITE_KEY"))
 
 
-def _record_submission(ip: str) -> None:
-    _contact_rate_limit.setdefault(ip, []).append(time.time())
+def _verify_turnstile(token: str) -> tuple[bool, str | None]:
+    """Server-side Turnstile check — client tokens are never trusted alone."""
+    if not _turnstile_enabled():
+        app.logger.warning("Turnstile verification skipped (TURNSTILE_ENABLED is false or missing)")
+        return True, None
+
+    secret = os.environ.get("TURNSTILE_SECRET_KEY")
+    if not secret:
+        app.logger.warning("Turnstile enabled but TURNSTILE_SECRET_KEY is missing")
+        return False, "Security check unavailable. Please try again later."
+
+    if not token:
+        return False, "Please complete the security check."
+
+    try:
+        response = requests.post(
+            TURNSTILE_VERIFY_URL,
+            data={"secret": secret, "response": token, "remoteip": _client_ip()},
+            timeout=10,
+        )
+        data = response.json()
+    except requests.RequestException:
+        app.logger.warning("Turnstile verification request failed")
+        return False, "Security check failed. Please try again."
+
+    if not data.get("success"):
+        error_codes = data.get("error-codes", [])
+        app.logger.warning("Turnstile verification failed: %s", error_codes)
+        return False, "Security check failed. Please try again."
+
+    return True, None
 
 
 def _validate_contact_form(form: dict) -> str | None:
@@ -448,12 +491,20 @@ def _validate_contact_form(form: dict) -> str | None:
 
 
 def _send_contact_email(name: str, email: str, intent: str, message: str) -> bool:
+    """Send via Postmark: From=verified domain, Reply-To=visitor (so replies reach them)."""
     token = os.environ.get("POSTMARK_SERVER_TOKEN")
     from_email = os.environ.get("CONTACT_FROM_EMAIL")
     to_email = os.environ.get("CONTACT_TO_EMAIL")
     subject_prefix = os.environ.get("CONTACT_SUBJECT_PREFIX", "[keko-figueroa.dev]")
 
     if not token or not from_email or not to_email:
+        app.logger.warning(
+            "Postmark not configured; contact message not sent (name=%r email=%r intent=%r message_len=%d)",
+            name,
+            email,
+            intent,
+            len(message),
+        )
         return False
 
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -468,27 +519,54 @@ def _send_contact_email(name: str, email: str, intent: str, message: str) -> boo
         f"User-Agent: {request.headers.get('User-Agent', 'unknown')}\n"
     )
 
-    response = requests.post(
-        POSTMARK_API_URL,
-        headers={
-            "X-Postmark-Server-Token": token,
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-        json={
-            "From": from_email,
-            "To": to_email,
-            "ReplyTo": email,
-            "Subject": f"{subject_prefix} {intent} — {name}",
-            "TextBody": text_body,
-        },
-        timeout=10,
-    )
+    try:
+        response = requests.post(
+            POSTMARK_API_URL,
+            headers={
+                "X-Postmark-Server-Token": token,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            json={
+                "From": from_email,
+                "To": to_email,
+                "ReplyTo": email,
+                "Subject": f"{subject_prefix} {intent} — {name}",
+                "TextBody": text_body,
+            },
+            timeout=10,
+        )
+    except requests.RequestException:
+        app.logger.warning("Postmark request failed for contact submission")
+        return False
+
+    if not response.ok:
+        app.logger.warning("Postmark returned HTTP %s", response.status_code)
     return response.ok
 
 
+def _contact_page_context(
+    form_values=None,
+    form_success=False,
+    form_error=None,
+):
+    if form_values is None:
+        form_values = {"name": "", "email": "", "intent": "", "message": ""}
+    return {
+        "contact_intents": CONTACT_INTENTS,
+        "form_values": form_values,
+        "form_success": form_success,
+        "form_error": form_error,
+        "turnstile_enabled": _turnstile_active(),
+        "turnstile_site_key": os.environ.get("TURNSTILE_SITE_KEY", ""),
+    }
+
+
 @app.route("/contact", methods=["GET", "POST"])
+@limiter.limit("5 per hour", methods=["POST"])
+@limiter.limit("2 per minute", methods=["POST"])
 def contact():
+    """Contact flow: validate → bot checks → rate limit → Postmark send → friendly UX."""
     form_values = {"name": "", "email": "", "intent": "", "message": ""}
     form_success = False
     form_error = None
@@ -501,20 +579,19 @@ def contact():
             "message": (request.form.get("message") or "").strip(),
         }
 
-        # Honeypot: bots get a fake success; no email sent.
+        # Honeypot: pretend success so bots don't adapt; never send email.
         if (request.form.get("company") or "").strip():
             form_success = True
         else:
-            client_ip = _client_ip()
-            if _rate_limit_exceeded(client_ip):
-                form_error = (
-                    "Too many messages from this address. "
-                    "Please try again later or email me directly."
-                )
+            validation_error = _validate_contact_form(form_values)
+            if validation_error:
+                form_error = validation_error
             else:
-                validation_error = _validate_contact_form(form_values)
-                if validation_error:
-                    form_error = validation_error
+                turnstile_ok, turnstile_error = _verify_turnstile(
+                    (request.form.get("cf-turnstile-response") or "").strip()
+                )
+                if not turnstile_ok:
+                    form_error = turnstile_error
                 elif not _send_contact_email(
                     form_values["name"],
                     form_values["email"],
@@ -522,21 +599,35 @@ def contact():
                     form_values["message"],
                 ):
                     form_error = (
-                        "Couldn't send right now. "
-                        f"Email me directly at {os.environ.get('CONTACT_TO_EMAIL', 'keko@keko-figueroa.dev')}."
+                        "Email is temporarily unavailable. "
+                        "Please try again later."
                     )
                 else:
-                    _record_submission(client_ip)
                     form_success = True
                     form_values = {"name": "", "email": "", "intent": "", "message": ""}
 
     return render_template(
         "contact.html",
-        contact_intents=CONTACT_INTENTS,
-        form_values=form_values,
-        form_success=form_success,
-        form_error=form_error,
+        **_contact_page_context(form_values, form_success, form_error),
     )
+
+
+@app.errorhandler(429)
+def rate_limit_exceeded(_error):
+    if request.endpoint == "contact":
+        return (
+            render_template(
+                "contact.html",
+                **_contact_page_context(
+                    form_error=(
+                        "Too many messages from this address. "
+                        "Please try again later."
+                    ),
+                ),
+            ),
+            429,
+        )
+    return _error.get_response()
 
 
 @app.route("/blog")

@@ -104,7 +104,20 @@
       <input type="text" id="company" name="company" tabindex="-1" autocomplete="off" />
     </div>
 
+    {% if turnstile_enabled %}
+    {# Turnstile widget — injects cf-turnstile-response token for server-side verification. #}
+    <div class="form-field form-turnstile">
+      <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"></div>
+    </div>
+    {% endif %}
+
     <button class="form-submit" type="submit">Send message</button>
   </form>
 </section>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if turnstile_enabled %}
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+{% endif %}
 {% endblock %}

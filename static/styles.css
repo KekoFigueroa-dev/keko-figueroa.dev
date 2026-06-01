@@ -757,6 +757,10 @@ a:hover {
   overflow: hidden;
 }
 
+.form-turnstile {
+  margin-top: 0.25rem;
+}
+
 .form-submit {
   align-self: flex-start;
   font-family: var(--font-mono);

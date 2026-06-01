@@ -11,7 +11,7 @@ This repository is a server-rendered portfolio focused on back-end/data/AI proje
 ## Design Goals
 
 - Fast first render (no SPA runtime required)
-- Minimal JavaScript (currently none)
+- Minimal JavaScript (Turnstile widget on contact page only when enabled)
 - Terminal-techy visual language without sacrificing readability
 - Content-as-code for transparent edits and review
 
@@ -52,6 +52,7 @@ curl http://127.0.0.1:5000/health
 | `GET /blog/<slug>` | Blog post detail |
 | `GET /about` | About page |
 | `GET /contact` | Contact page |
+| `POST /contact` | Contact form submission (Postmark + bot protection) |
 | `GET /health` | JSON health endpoint |
 
 ## Editing Project Content
@@ -83,6 +84,48 @@ To add a post:
 
 1. Add an entry with `slug`, `title`, `date`, `excerpt`, and `body` (list of paragraphs)
 2. Check `/blog` and `/blog/<slug>` locally
+
+## Contact form (security + deliverability)
+
+The contact page posts to `POST /contact`. Submissions are sent via **Postmark** (HTTP API) — not `mailto:` — for reliable delivery and structured fields.
+
+| Design choice | Why |
+|---|---|
+| Postmark API | Strong deliverability, simple integration, no SMTP daemon on Render |
+| **From** = `CONTACT_FROM_EMAIL` | Must be a Postmark-verified sender on the domain (SPF/DKIM alignment) |
+| **To** = `CONTACT_TO_EMAIL` | Inbox that receives submissions |
+| **Reply-To** = visitor email | Your reply goes directly to the person who wrote in |
+| No DB storage | Keeps the stack static-first; the mailbox is the record |
+
+### Required environment variables (names only)
+
+**Postmark**
+
+- `POSTMARK_SERVER_TOKEN`
+- `CONTACT_TO_EMAIL`
+- `CONTACT_FROM_EMAIL`
+- `CONTACT_SUBJECT_PREFIX` (optional; defaults to `[keko-figueroa.dev]`)
+
+**Turnstile**
+
+- `TURNSTILE_SITE_KEY`
+- `TURNSTILE_SECRET_KEY`
+- `TURNSTILE_ENABLED` (`true` in production; `false` or unset locally to skip captcha)
+
+### Local dev behavior
+
+- `TURNSTILE_ENABLED` false/missing → captcha verification skipped (warning logged)
+- `POSTMARK_SERVER_TOKEN` missing → friendly on-page error; payload logged, app does not crash
+
+### Verification checklist
+
+Copy this when testing locally or after deploy (full detail in `docs/deploy.md`):
+
+- [ ] Happy path: submit form → email arrives at `CONTACT_TO_EMAIL`
+- [ ] Reply-To header points to the visitor's email
+- [ ] Turnstile enforced (when enabled): missing/invalid token blocks send with on-page error
+- [ ] Rate limit: repeated submissions from same IP return friendly 429 / on-page message
+- [ ] Honeypot: filling hidden `company` field shows success but does not send email
 
 ## Deploy Notes (Render + Cloudflare)
 
