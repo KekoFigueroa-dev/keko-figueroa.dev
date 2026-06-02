@@ -21,6 +21,9 @@
       <div class="container header-inner">
         <a class="site-logo mono" href="{{ url_for('home') }}">{{ site_name }}</a>
         <nav class="site-nav" aria-label="Main navigation">
+          <button type="button" class="terminal-hint mono" data-terminal-hint aria-label="Open terminal console (shortcut: c)">
+            Press <kbd>c</kbd> — terminal
+          </button>
           {% for label, endpoint in nav_links %}
           <a
             href="{{ url_for(endpoint) }}"
@@ -58,24 +61,31 @@
       hidden
     >
       <div class="terminal-window">
-        <header class="terminal-header" data-terminal-drag-handle>
-          <span id="terminal-title" class="terminal-title mono">keko@keko:~$</span>
-          <button type="button" class="terminal-close-btn mono" data-terminal-close aria-label="Close terminal">×</button>
+        <header class="terminal-header">
+          <span id="terminal-title" class="terminal-title mono" data-terminal-drag-handle>keko@keko:~$</span>
+          <div class="terminal-window-controls">
+            <button type="button" class="terminal-chrome-btn mono" data-terminal-minimize aria-label="Minimize terminal">−</button>
+            <button type="button" class="terminal-chrome-btn mono" data-terminal-dock="left" aria-label="Dock terminal to left">⬅</button>
+            <button type="button" class="terminal-chrome-btn mono" data-terminal-dock="right" aria-label="Dock terminal to right">➡</button>
+            <button type="button" class="terminal-chrome-btn mono" data-terminal-close aria-label="Close terminal">×</button>
+          </div>
         </header>
-        <div class="terminal-output mono" data-terminal-output role="log" aria-live="polite"></div>
-        <form class="terminal-input-row mono" data-terminal-form autocomplete="off">
-          <label class="terminal-prompt" for="terminal-input">$</label>
-          <input
-            id="terminal-input"
-            class="terminal-input"
-            type="text"
-            data-terminal-input
-            spellcheck="false"
-            autocapitalize="off"
-            autocomplete="off"
-            aria-label="Terminal command"
-          />
-        </form>
+        <div class="terminal-body">
+          <div class="terminal-output mono" data-terminal-output role="log" aria-live="polite"></div>
+          <form class="terminal-input-row mono" data-terminal-form autocomplete="off">
+            <label class="terminal-prompt mono" for="terminal-input" data-terminal-prompt>$</label>
+            <input
+              id="terminal-input"
+              class="terminal-input"
+              type="text"
+              data-terminal-input
+              spellcheck="false"
+              autocapitalize="off"
+              autocomplete="off"
+              aria-label="Terminal command"
+            />
+          </form>
+        </div>
       </div>
     </div>
 
@@ -140,6 +150,13 @@
           event.preventDefault();
           toggleTerminal();
         });
+
+        var hint = document.querySelector("[data-terminal-hint]");
+        if (hint) {
+          hint.addEventListener("click", function () {
+            toggleTerminal();
+          });
+        }
       })();
     </script>
 

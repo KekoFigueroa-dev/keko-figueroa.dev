@@ -6,9 +6,10 @@
   "use strict";
 
   var STORAGE_THEME = "siteTheme";
-  var STORAGE_POSITION = "terminalPosition";
+  var STORAGE_LAYOUT = "terminalLayout";
   var THEMES = ["matrix", "solarized-dark", "high-contrast", "nord"];
   var DEFAULT_THEME = "matrix";
+  var ROOT_DIRS = ["/projects", "/blog", "/about", "/contact"];
 
   var CD_ALIASES = {
     "/": "/",
@@ -21,11 +22,13 @@
 
   function readSiteIndex() {
     var el = document.getElementById("site-index");
-    if (!el) return { pages: [], projects: [] };
+    if (!el) return { pages: [], projects: [], posts: [] };
     try {
-      return JSON.parse(el.textContent || "{}");
+      var data = JSON.parse(el.textContent || "{}");
+      if (!data.posts) data.posts = [];
+      return data;
     } catch (e) {
-      return { pages: [], projects: [] };
+      return { pages: [], projects: [], posts: [] };
     }
   }
 
@@ -33,10 +36,13 @@
     return line.trim().replace(/\s+/g, " ");
   }
 
-  function projectSlugs(siteIndex) {
-    return siteIndex.projects.map(function (p) {
-      return p.slug;
-    });
+  function normalizeSlug(value) {
+    return value.toLowerCase().trim().replace(/_/g, "-");
+  }
+
+  function normalizeCwd(path) {
+    if (!path || path === "/") return "/";
+    return path.replace(/\/+$/, "") || "/";
   }
 
   function findProject(siteIndex, slug) {
@@ -46,25 +52,127 @@
     return null;
   }
 
+  function findPost(siteIndex, slug) {
+    for (var i = 0; i < siteIndex.posts.length; i += 1) {
+      if (siteIndex.posts[i].slug === slug) return siteIndex.posts[i];
+    }
+    return null;
+  }
+
+  /** Match slug, alias, or title fragment (e.g. cd Token_name_esports). */
+  function resolveProject(siteIndex, query) {
+    if (!query) return null;
+    var normalized = normalizeSlug(query);
+    var needle = query.toLowerCase().trim();
+
+    var exact = findProject(siteIndex, normalized);
+    if (exact) return exact;
+
+    for (var i = 0; i < siteIndex.projects.length; i += 1) {
+      var project = siteIndex.projects[i];
+      if (project.slug.toLowerCase() === normalized) return project;
+      if (project.aliases) {
+        for (var j = 0; j < project.aliases.length; j += 1) {
+          if (project.aliases[j].toLowerCase() === needle) return project;
+        }
+      }
+      if (project.title && project.title.toLowerCase().indexOf(needle) !== -1) return project;
+    }
+
+    var partial = siteIndex.projects.filter(function (project) {
+      return project.slug.indexOf(normalized) !== -1 || normalized.indexOf(project.slug) !== -1;
+    });
+    if (partial.length === 1) return partial[0];
+    return null;
+  }
+
   function Terminal(root) {
     this.root = root;
     this.windowEl = root.querySelector(".terminal-window");
     this.outputEl = root.querySelector("[data-terminal-output]");
     this.inputEl = root.querySelector("[data-terminal-input]");
+    this.promptEl = root.querySelector("[data-terminal-prompt]");
     this.formEl = root.querySelector("[data-terminal-form]");
     this.dragHandle = root.querySelector("[data-terminal-drag-handle]");
+    this.minimizeBtn = root.querySelector("[data-terminal-minimize]");
+    this.dockBtns = root.querySelectorAll("[data-terminal-dock]");
     this.closeBtn = root.querySelector("[data-terminal-close]");
     this.siteIndex = readSiteIndex();
     this.history = [];
     this.historyCursor = -1;
+    this.cwd = "/";
     this.isOpen = false;
+    this.isMinimized = false;
+    this.dockSide = null;
+    this.floatSnapshot = null;
     this.dragState = null;
+    this.resizeObserver = null;
   }
 
   Terminal.prototype.init = function () {
-    this.restorePosition();
+    this.cwd = this.cwdFromBrowserPath();
+    this.restoreLayout();
     this.bindEvents();
+    this.updateDockButtons();
+    this.updateMinimizeButton();
+    this.updatePrompt();
     this.printWelcome();
+  };
+
+  Terminal.prototype.cwdFromBrowserPath = function () {
+    var path = normalizeCwd(window.location.pathname);
+    if (this.pathExists(path)) return path;
+    if (path.indexOf("/projects/") === 0) {
+      var slug = path.slice("/projects/".length);
+      if (findProject(this.siteIndex, slug)) return "/projects/" + slug;
+      return "/projects";
+    }
+    if (path.indexOf("/blog/") === 0) {
+      var postSlug = path.slice("/blog/".length);
+      if (findPost(this.siteIndex, postSlug)) return "/blog/" + postSlug;
+      return "/blog";
+    }
+    return "/";
+  };
+
+  Terminal.prototype.pathExists = function (path) {
+    var normalized = normalizeCwd(path);
+    if (normalized === "/") return true;
+    if (ROOT_DIRS.indexOf(normalized) !== -1) return true;
+    if (normalized.indexOf("/projects/") === 0) {
+      return !!findProject(this.siteIndex, normalized.slice("/projects/".length));
+    }
+    if (normalized.indexOf("/blog/") === 0) {
+      return !!findPost(this.siteIndex, normalized.slice("/blog/".length));
+    }
+    return false;
+  };
+
+  Terminal.prototype.setCwd = function (path) {
+    this.cwd = normalizeCwd(path);
+    this.updatePrompt();
+  };
+
+  Terminal.prototype.updatePrompt = function () {
+    if (!this.promptEl) return;
+    var label = this.cwd === "/" ? "~" : this.cwd;
+    this.promptEl.textContent = "keko:" + label + "$";
+  };
+
+  Terminal.prototype.listDir = function () {
+    var cwd = this.cwd;
+    if (cwd === "/") return ROOT_DIRS.slice();
+    if (cwd === "/projects") {
+      return this.siteIndex.projects.map(function (project) {
+        return "/projects/" + project.slug;
+      });
+    }
+    if (cwd === "/blog") {
+      return this.siteIndex.posts.map(function (post) {
+        return "/blog/" + post.slug;
+      });
+    }
+    return [];
   };
 
   Terminal.prototype.bindEvents = function () {
@@ -77,7 +185,7 @@
       self.historyCursor = -1;
       if (!value.trim()) return;
       self.history.push(value);
-      self.printLine("$ " + value, "terminal-line-input");
+      self.printLine("keko:" + (self.cwd === "/" ? "~" : self.cwd) + "$ " + value, "terminal-line-input");
       self.runCommand(value);
     });
 
@@ -109,10 +217,40 @@
       }
     });
 
-    this.closeBtn.addEventListener("click", function () {
-      self.close();
-    });
+    if (this.closeBtn) {
+      this.closeBtn.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        self.close();
+      });
+    }
 
+    if (this.minimizeBtn) {
+      this.minimizeBtn.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        self.toggleMinimize();
+      });
+    }
+
+    if (this.dockBtns.length) {
+      this.dockBtns.forEach(function (btn) {
+        btn.addEventListener("click", function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          var side = btn.getAttribute("data-terminal-dock");
+          if (self.dockSide === side) self.undock();
+          else self.dock(side);
+        });
+      });
+    }
+
+    if (this.dragHandle) {
+      this.dragHandle.addEventListener("click", function () {
+        if (self.isMinimized) self.restore();
+      });
+      this.setupDrag(this.dragHandle);
+    }
     document.addEventListener("keydown", function (event) {
       if (!self.isOpen) return;
       if (event.key === "Escape") {
@@ -121,7 +259,21 @@
       }
     });
 
-    this.setupDrag(this.dragHandle);
+    this.setupResizeObserver();
+  };
+
+  Terminal.prototype.setupResizeObserver = function () {
+    var self = this;
+    if (typeof ResizeObserver === "undefined") return;
+    var timer;
+    this.resizeObserver = new ResizeObserver(function () {
+      if (!self.isOpen) return;
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        self.saveLayout();
+      }, 150);
+    });
+    this.resizeObserver.observe(this.root);
   };
 
   Terminal.prototype.setupDrag = function (handle) {
@@ -129,8 +281,10 @@
 
     function onPointerDown(event) {
       if (event.button !== undefined && event.button !== 0) return;
+      if (event.target.closest("[data-terminal-close], [data-terminal-minimize], [data-terminal-dock]")) return;
+      if (self.dockSide) return;
       event.preventDefault();
-      var rect = self.windowEl.getBoundingClientRect();
+      var rect = self.root.getBoundingClientRect();
       self.dragState = {
         pointerId: event.pointerId,
         offsetX: event.clientX - rect.left,
@@ -142,16 +296,14 @@
 
     function onPointerMove(event) {
       if (!self.dragState || self.dragState.pointerId !== event.pointerId) return;
-      var x = event.clientX - self.dragState.offsetX;
-      var y = event.clientY - self.dragState.offsetY;
-      self.applyPosition(x, y);
+      self.applyPosition(event.clientX - self.dragState.offsetX, event.clientY - self.dragState.offsetY);
     }
 
     function onPointerUp(event) {
       if (!self.dragState || self.dragState.pointerId !== event.pointerId) return;
       self.dragState = null;
       self.root.classList.remove("is-dragging");
-      self.savePosition();
+      self.saveLayout();
       try {
         handle.releasePointerCapture(event.pointerId);
       } catch (e) {}
@@ -163,44 +315,222 @@
     handle.addEventListener("pointercancel", onPointerUp);
   };
 
+  Terminal.prototype.captureFloatLayout = function () {
+    return {
+      width: this.root.offsetWidth,
+      height: this.root.offsetHeight,
+      left: parseFloat(this.root.style.left),
+      top: parseFloat(this.root.style.top),
+      positioned: this.root.classList.contains("is-positioned"),
+    };
+  };
+
+  Terminal.prototype.isDocked = function () {
+    return this.dockSide === "left" || this.dockSide === "right";
+  };
+
+  Terminal.prototype.clearDockStyles = function () {
+    this.root.classList.remove("is-docked-left", "is-docked-right");
+    this.dockSide = null;
+  };
+
+  Terminal.prototype.applyFloatLayout = function (layout) {
+    if (!layout) return;
+    this.clearDockStyles();
+    if (typeof layout.width === "number" && typeof layout.height === "number") {
+      this.applySize(layout.width, layout.height);
+    }
+    if (layout.positioned && !isNaN(layout.left) && !isNaN(layout.top)) {
+      this.applyPosition(layout.left, layout.top);
+    } else {
+      this.root.classList.remove("is-positioned");
+      this.root.style.left = "";
+      this.root.style.top = "";
+      this.root.style.right = "";
+      this.root.style.bottom = "";
+    }
+    this.updateDockButtons();
+  };
+
   Terminal.prototype.applyPosition = function (left, top) {
-    var maxLeft = Math.max(0, window.innerWidth - this.windowEl.offsetWidth);
-    var maxTop = Math.max(0, window.innerHeight - this.windowEl.offsetHeight);
-    var clampedLeft = Math.min(Math.max(0, left), maxLeft);
-    var clampedTop = Math.min(Math.max(0, top), maxTop);
-    this.root.style.left = clampedLeft + "px";
-    this.root.style.top = clampedTop + "px";
+    var maxLeft = Math.max(0, window.innerWidth - this.root.offsetWidth);
+    var maxTop = Math.max(0, window.innerHeight - this.root.offsetHeight);
+    this.root.style.left = Math.min(Math.max(0, left), maxLeft) + "px";
+    this.root.style.top = Math.min(Math.max(0, top), maxTop) + "px";
     this.root.style.right = "auto";
     this.root.style.bottom = "auto";
     this.root.classList.add("is-positioned");
   };
 
-  Terminal.prototype.restorePosition = function () {
+  Terminal.prototype.applySize = function (width, height) {
+    this.root.style.width = width + "px";
+    this.root.style.height = height + "px";
+  };
+
+  Terminal.prototype.restoreLayout = function () {
     try {
-      var raw = localStorage.getItem(STORAGE_POSITION);
-      if (!raw) return;
-      var pos = JSON.parse(raw);
-      if (typeof pos.left === "number" && typeof pos.top === "number") {
-        this.applyPosition(pos.left, pos.top);
+      var raw = localStorage.getItem(STORAGE_LAYOUT);
+      if (!raw) {
+        raw = localStorage.getItem("terminalPosition");
       }
+      if (!raw) return;
+      var layout = JSON.parse(raw);
+
+      if (layout.float) {
+        this.floatSnapshot = layout.float;
+      }
+
+      if (layout.mode === "docked") {
+        var side = layout.dockSide === "left" ? "left" : "right";
+        this.dockSide = side;
+        this.root.classList.remove("is-positioned");
+        this.root.style.left = "";
+        this.root.style.top = "";
+        this.root.style.right = "";
+        this.root.style.bottom = "";
+        this.root.classList.add("is-docked-" + side);
+        if (typeof layout.width === "number") {
+          this.root.style.width = layout.width + "px";
+        }
+      } else if (layout.float) {
+        this.applyFloatLayout(layout.float);
+      } else {
+        if (typeof layout.width === "number" && typeof layout.height === "number") {
+          this.applySize(layout.width, layout.height);
+        }
+        if (typeof layout.left === "number" && typeof layout.top === "number") {
+          this.applyPosition(layout.left, layout.top);
+        }
+      }
+
+      if (layout.minimized) {
+        this.minimize(false);
+      }
+
+      this.updateDockButtons();
     } catch (e) {}
   };
 
-  Terminal.prototype.savePosition = function () {
-    if (!this.root.classList.contains("is-positioned")) return;
+  Terminal.prototype.saveLayout = function () {
     try {
-      localStorage.setItem(
-        STORAGE_POSITION,
-        JSON.stringify({
-          left: parseFloat(this.root.style.left) || 0,
-          top: parseFloat(this.root.style.top) || 0,
-        })
-      );
+      var payload = {
+        mode: this.isDocked() ? "docked" : "float",
+        minimized: this.isMinimized,
+      };
+
+      if (this.isDocked()) {
+        payload.dockSide = this.dockSide;
+        payload.width = this.root.offsetWidth;
+        if (this.floatSnapshot) payload.float = this.floatSnapshot;
+      } else {
+        payload.float = this.captureFloatLayout();
+        this.floatSnapshot = payload.float;
+        payload.height = this.root.offsetHeight;
+      }
+
+      localStorage.setItem(STORAGE_LAYOUT, JSON.stringify(payload));
     } catch (e) {}
+  };
+
+  Terminal.prototype.updateDockButtons = function () {
+    var self = this;
+    this.dockBtns.forEach(function (btn) {
+      var side = btn.getAttribute("data-terminal-dock");
+      var active = self.dockSide === side;
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
+      btn.setAttribute(
+        "aria-label",
+        active ? "Undock terminal (" + side + ")" : "Dock terminal to " + side
+      );
+    });
+  };
+
+  Terminal.prototype.updateMinimizeButton = function () {
+    if (!this.minimizeBtn) return;
+    this.minimizeBtn.setAttribute("aria-label", this.isMinimized ? "Restore terminal" : "Minimize terminal");
+    this.minimizeBtn.setAttribute("aria-pressed", this.isMinimized ? "true" : "false");
+    this.minimizeBtn.textContent = this.isMinimized ? "□" : "−";
+  };
+
+  Terminal.prototype.minimize = function (save) {
+    if (!this.isOpen) return;
+    this.isMinimized = true;
+    this.root.classList.add("is-minimized");
+    this.updateMinimizeButton();
+    if (save !== false) this.saveLayout();
+  };
+
+  Terminal.prototype.restore = function () {
+    this.isMinimized = false;
+    this.root.classList.remove("is-minimized");
+    this.updateMinimizeButton();
+    if (this.isOpen) this.inputEl.focus();
+    this.saveLayout();
+  };
+
+  Terminal.prototype.toggleMinimize = function () {
+    if (this.isMinimized) this.restore();
+    else this.minimize();
+  };
+
+  Terminal.prototype.dock = function (side) {
+    if (side !== "left" && side !== "right") return;
+    if (this.dockSide === side) {
+      this.undock();
+      return;
+    }
+    if (!this.isDocked()) {
+      this.floatSnapshot = this.captureFloatLayout();
+    }
+    this.clearDockStyles();
+    this.root.classList.remove("is-positioned");
+    this.root.style.left = "";
+    this.root.style.top = "";
+    this.root.style.right = "";
+    this.root.style.bottom = "";
+    this.dockSide = side;
+    this.root.classList.add("is-docked-" + side);
+    var width = (this.floatSnapshot && this.floatSnapshot.width) || this.root.offsetWidth || 480;
+    width = Math.min(Math.max(width, 288), Math.floor(window.innerWidth * 0.45));
+    this.root.style.width = width + "px";
+    this.root.style.height = "";
+    this.updateDockButtons();
+    this.saveLayout();
+  };
+
+  Terminal.prototype.undock = function () {
+    if (!this.isDocked()) return;
+    this.clearDockStyles();
+    this.applyFloatLayout(this.floatSnapshot);
+    this.saveLayout();
+  };
+
+  Terminal.prototype.cmdDock = function (args) {
+    if (!args.length) {
+      this.printLine("Usage: dock left | dock right", "terminal-line-error");
+      this.printLine(
+        "Docked: " + (this.isDocked() ? this.dockSide : "none (floating)"),
+        "terminal-line-muted"
+      );
+      return;
+    }
+    var side = args[0].toLowerCase();
+    if (side !== "left" && side !== "right") {
+      this.printLine('Usage: dock left | dock right  (got "' + args[0] + '")', "terminal-line-error");
+      return;
+    }
+    if (this.dockSide === side) this.undock();
+    else this.dock(side);
   };
 
   Terminal.prototype.getTheme = function () {
-    return document.documentElement.getAttribute("data-theme") || DEFAULT_THEME;
+    var fromDom = document.documentElement.getAttribute("data-theme");
+    if (fromDom) return fromDom;
+    try {
+      var stored = localStorage.getItem(STORAGE_THEME);
+      if (stored) return stored;
+    } catch (e) {}
+    return DEFAULT_THEME;
   };
 
   Terminal.prototype.setTheme = function (name) {
@@ -218,9 +548,14 @@
     this.outputEl.scrollTop = this.outputEl.scrollHeight;
   };
 
+  Terminal.prototype.printHelpEntry = function (command, description) {
+    this.printLine("  " + command, "terminal-line-help");
+    this.printLine("      " + description, "terminal-line-help-desc");
+  };
+
   Terminal.prototype.printWelcome = function () {
     this.printLine("Keko-Figueroa.Dev terminal — type help", "terminal-line-muted");
-    this.printLine("Esc or close to exit · c toggles when focus is outside input", "terminal-line-muted");
+    this.printLine("Header: − minimize · ⬅➡ dock · × close · drag title to move", "terminal-line-muted");
   };
 
   Terminal.prototype.clearOutput = function () {
@@ -232,20 +567,38 @@
     this.root.hidden = false;
     this.root.classList.add("is-open");
     this.root.setAttribute("aria-hidden", "false");
-    this.inputEl.focus();
+    if (this.isMinimized) this.restore();
+    else this.inputEl.focus();
   };
 
   Terminal.prototype.close = function () {
     this.isOpen = false;
-    this.root.classList.remove("is-open");
+    this.isMinimized = false;
+    this.root.classList.remove("is-open", "is-minimized");
     this.root.setAttribute("aria-hidden", "true");
     this.root.hidden = true;
+    this.updateMinimizeButton();
     this.inputEl.blur();
+    try {
+      var raw = localStorage.getItem(STORAGE_LAYOUT);
+      if (raw) {
+        var layout = JSON.parse(raw);
+        layout.minimized = false;
+        localStorage.setItem(STORAGE_LAYOUT, JSON.stringify(layout));
+      }
+    } catch (e) {}
   };
 
   Terminal.prototype.toggle = function () {
-    if (this.isOpen) this.close();
-    else this.open();
+    if (!this.isOpen) {
+      this.open();
+      return;
+    }
+    if (this.isMinimized) {
+      this.restore();
+      return;
+    }
+    this.close();
   };
 
   Terminal.prototype.navigate = function (path) {
@@ -256,7 +609,6 @@
     var line = normalizeInput(raw);
     var parts = line.split(" ");
     var cmd = parts[0].toLowerCase();
-    var arg = parts.slice(1).join(" ");
 
     switch (cmd) {
       case "help":
@@ -267,6 +619,18 @@
         break;
       case "close":
         this.close();
+        break;
+      case "minimize":
+        this.minimize();
+        break;
+      case "restore":
+        this.restore();
+        break;
+      case "dock":
+        this.cmdDock(parts.slice(1));
+        break;
+      case "undock":
+        this.undock();
         break;
       case "history":
         this.cmdHistory();
@@ -281,10 +645,10 @@
         this.cmdOpen(parts.slice(1));
         break;
       case "cd":
-        this.cmdCd(arg);
+        this.cmdCd(parts.slice(1).join(" "));
         break;
       case "theme":
-        this.cmdTheme(arg);
+        this.cmdTheme(parts.slice(1));
         break;
       default:
         this.printLine('Unknown command: "' + cmd + '". Type help.', "terminal-line-error");
@@ -292,16 +656,24 @@
   };
 
   Terminal.prototype.cmdHelp = function () {
-    var lines = [
-      "Commands:",
-      "  help, clear, close, history",
-      "  ls, projects",
-      "  open <path>          e.g. open /blog",
-      "  open project <slug>  e.g. open project deuna-payments-flow",
-      "  cd <page>            /, projects, blog, about, contact",
-      "  theme, theme <name>  matrix, solarized-dark, high-contrast, nord",
-    ];
-    for (var i = 0; i < lines.length; i += 1) this.printLine(lines[i]);
+    this.printLine("Commands", "terminal-line-help");
+    this.printHelpEntry("help", "Show this command reference.");
+    this.printHelpEntry("clear", "Clear terminal output.");
+    this.printHelpEntry("close", "Close the terminal overlay.");
+    this.printHelpEntry("minimize", "Collapse to the header bar.");
+    this.printHelpEntry("restore", "Expand a minimized terminal.");
+    this.printHelpEntry("dock left", "Pin the terminal to the left edge (full height).");
+    this.printHelpEntry("dock right", "Pin the terminal to the right edge (full height).");
+    this.printHelpEntry("undock", "Return to a floating, draggable window.");
+    this.printHelpEntry("history", "Show commands entered this session.");
+    this.printHelpEntry("ls", "List entries in the current directory (use cd first).");
+    this.printHelpEntry("projects", "List project slugs (shortcut for browsing).");
+    this.printHelpEntry("cd <path>", "Change directory without leaving the page (e.g. cd blog).");
+    this.printHelpEntry("open <path>", "Open a site path in the browser (e.g. open /about).");
+    this.printHelpEntry("open project <slug>", "Open a project detail page.");
+    this.printHelpEntry("theme", "Theme help — use theme list or theme set <name>.");
+    this.printHelpEntry("theme list", "List available color themes.");
+    this.printHelpEntry("theme set <name>", "Apply a theme (matrix, solarized-dark, high-contrast, nord).");
   };
 
   Terminal.prototype.cmdHistory = function () {
@@ -315,24 +687,25 @@
   };
 
   Terminal.prototype.cmdLs = function () {
-    var self = this;
-    this.siteIndex.pages.forEach(function (page) {
-      self.printLine(page.path + "  (" + page.name + ")");
-    });
-    this.siteIndex.projects.forEach(function (project) {
-      self.printLine("/projects/" + project.slug + "  (" + project.title + ")");
-    });
+    var entries = this.listDir();
+    if (!entries.length) {
+      this.printLine("(empty)", "terminal-line-muted");
+      return;
+    }
+    for (var i = 0; i < entries.length; i += 1) {
+      this.printLine(entries[i]);
+    }
   };
 
   Terminal.prototype.cmdProjects = function () {
-    var self = this;
     if (!this.siteIndex.projects.length) {
       this.printLine("(no projects)");
       return;
     }
-    this.siteIndex.projects.forEach(function (project) {
-      self.printLine(project.slug + "  —  " + project.title);
-    });
+    for (var i = 0; i < this.siteIndex.projects.length; i += 1) {
+      var project = this.siteIndex.projects[i];
+      this.printLine(project.slug + "  —  " + project.title);
+    }
   };
 
   Terminal.prototype.cmdOpen = function (args) {
@@ -347,11 +720,13 @@
         this.printLine("Usage: open project <slug>", "terminal-line-error");
         return;
       }
-      if (!findProject(this.siteIndex, slug)) {
+      var project = findProject(this.siteIndex, slug) || resolveProject(this.siteIndex, slug);
+      if (!project) {
         this.printLine('Unknown project slug: "' + slug + '"', "terminal-line-error");
+        this.printLine("Run projects to list slugs.", "terminal-line-muted");
         return;
       }
-      this.navigate("/projects/" + slug);
+      this.navigate("/projects/" + project.slug);
       return;
     }
 
@@ -362,34 +737,111 @@
 
   Terminal.prototype.cmdCd = function (target) {
     if (!target) {
-      this.printLine("Usage: cd <page>  (/ | projects | blog | about | contact)", "terminal-line-error");
+      this.printLine("Usage: cd <path>  (e.g. cd blog, cd /projects, cd ..)", "terminal-line-error");
       return;
     }
-    var path = CD_ALIASES[target.toLowerCase()];
-    if (!path) {
-      this.printLine('Unknown page: "' + target + '"', "terminal-line-error");
+
+    if (target === "..") {
+      if (this.cwd === "/") return;
+      var segments = this.cwd.split("/").filter(Boolean);
+      segments.pop();
+      var parent = segments.length ? "/" + segments.join("/") : "/";
+      if (this.pathExists(parent)) {
+        this.setCwd(parent);
+      }
       return;
     }
-    this.navigate(path);
+
+    if (target.startsWith("/")) {
+      var absolute = normalizeCwd(target);
+      if (this.pathExists(absolute)) {
+        this.setCwd(absolute);
+        return;
+      }
+      this.printLine('No such path: "' + target + '"', "terminal-line-error");
+      return;
+    }
+
+    var alias = CD_ALIASES[target.toLowerCase()];
+    if (alias) {
+      this.setCwd(alias);
+      return;
+    }
+
+    if (this.cwd === "/projects") {
+      var inProjects = resolveProject(this.siteIndex, target);
+      if (inProjects) {
+        this.setCwd("/projects/" + inProjects.slug);
+        return;
+      }
+    }
+
+    var relative = normalizeCwd(this.cwd === "/" ? "/" + target : this.cwd + "/" + target);
+    if (this.pathExists(relative)) {
+      this.setCwd(relative);
+      return;
+    }
+
+    var project = resolveProject(this.siteIndex, target);
+    if (project) {
+      this.setCwd("/projects/" + project.slug);
+      return;
+    }
+
+    this.printLine('Unknown path: "' + target + '"', "terminal-line-error");
+    this.printLine("At ~: try cd projects, cd blog, cd about, cd contact", "terminal-line-muted");
   };
 
-  Terminal.prototype.cmdTheme = function (name) {
-    if (!name) {
-      this.printLine("Themes: " + THEMES.join(", "));
-      this.printLine("Current: " + this.getTheme());
+  Terminal.prototype.cmdTheme = function (args) {
+    if (!args.length) {
+      this.printLine("Switch the site color theme.", "terminal-line-muted");
+      this.printLine("  theme list", "terminal-line-help");
+      this.printLine("      List available themes.", "terminal-line-help-desc");
+      this.printLine("  theme set <name>", "terminal-line-help");
+      this.printLine("      Apply a theme.", "terminal-line-help-desc");
+      this.printLine("Current: " + this.getTheme(), "terminal-line-muted");
       return;
     }
-    if (THEMES.indexOf(name) === -1) {
-      this.printLine('Unknown theme: "' + name + '". Try: ' + THEMES.join(", "), "terminal-line-error");
+
+    var sub = args[0].toLowerCase();
+    if (sub === "list") {
+      var current = this.getTheme();
+      for (var i = 0; i < THEMES.length; i += 1) {
+        var name = THEMES[i];
+        var tags = [];
+        if (name === DEFAULT_THEME) tags.push("default");
+        if (name === current) tags.push("current");
+        var suffix = tags.length ? " (" + tags.join(", ") + ")" : "";
+        this.printLine("  " + name + suffix);
+      }
       return;
     }
-    this.setTheme(name);
-    this.printLine("Theme set to " + name);
+
+    if (sub === "set") {
+      var themeName = args[1];
+      if (!themeName) {
+        this.printLine("Usage: theme set <name>", "terminal-line-error");
+        return;
+      }
+      if (THEMES.indexOf(themeName) === -1) {
+        this.printLine('Unknown theme: "' + themeName + '". Run theme list.', "terminal-line-error");
+        return;
+      }
+      this.setTheme(themeName);
+      this.printLine("Theme set to " + themeName);
+      return;
+    }
+
+    this.printLine('Usage: theme list  |  theme set <name>', "terminal-line-error");
   };
 
   window.KekoTerminal = {
     init: function () {
-      if (window.__kekoTerminal) return window.__kekoTerminal;
+      if (window.__kekoTerminal) {
+        window.__kekoTerminal.cwd = window.__kekoTerminal.cwdFromBrowserPath();
+        window.__kekoTerminal.updatePrompt();
+        return window.__kekoTerminal;
+      }
       var root = document.getElementById("terminal-overlay");
       if (!root) return null;
       var terminal = new Terminal(root);
