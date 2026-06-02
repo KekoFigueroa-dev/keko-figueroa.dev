@@ -27,6 +27,17 @@
     return a.x === b.x && a.y === b.y;
   }
 
+  function wrapAxis(value, max) {
+    return ((value % max) + max) % max;
+  }
+
+  function cellCenter(x, y, size) {
+    return {
+      px: x * size + size / 2,
+      py: y * size + size / 2,
+    };
+  }
+
   function createSnakeGame() {
     var gameCtx = null;
     var canvas = null;
@@ -86,7 +97,7 @@
 
     function updateHud() {
       if (!hud) return;
-      hud.textContent = "Snake — score: " + score + "  ·  Arrow/WASD move  ·  q quit";
+      hud.textContent = "Snake — score: " + score + "  ·  edges wrap  ·  q quit";
     }
 
     function setDirection(next) {
@@ -106,14 +117,9 @@
 
       var head = snake[0];
       var next = {
-        x: head.x + direction.x,
-        y: head.y + direction.y,
+        x: wrapAxis(head.x + direction.x, GRID),
+        y: wrapAxis(head.y + direction.y, GRID),
       };
-
-      if (next.x < 0 || next.y < 0 || next.x >= GRID || next.y >= GRID) {
-        endGame();
-        return;
-      }
 
       if (snake.some(function (part) {
         return sameCell(part, next);
@@ -147,19 +153,25 @@
       }
     }
 
-    function drawGrid(context) {
-      context.strokeStyle = colors.border;
-      context.lineWidth = 1;
-      for (var i = 0; i <= GRID; i += 1) {
-        var offset = i * cellSize + 0.5;
+    function drawFood(context) {
+      var center = cellCenter(food.x, food.y, cellSize);
+      context.fillStyle = colors.food;
+      context.beginPath();
+      context.arc(center.px, center.py, cellSize * 0.34, 0, Math.PI * 2);
+      context.fill();
+    }
+
+    function drawSnake(context) {
+      if (!snake.length) return;
+
+      var radius = cellSize * 0.52;
+      context.fillStyle = colors.accent;
+
+      for (var i = snake.length - 1; i >= 0; i -= 1) {
+        var center = cellCenter(snake[i].x, snake[i].y, cellSize);
         context.beginPath();
-        context.moveTo(offset, 0);
-        context.lineTo(offset, canvas.height);
-        context.stroke();
-        context.beginPath();
-        context.moveTo(0, offset);
-        context.lineTo(canvas.width, offset);
-        context.stroke();
+        context.arc(center.px, center.py, radius, 0, Math.PI * 2);
+        context.fill();
       }
     }
 
@@ -169,25 +181,9 @@
       var canvasCtx = canvas.getContext("2d");
       canvasCtx.fillStyle = colors.bg;
       canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-      drawGrid(canvasCtx);
 
-      canvasCtx.fillStyle = colors.food;
-      canvasCtx.fillRect(
-        food.x * cellSize + 1,
-        food.y * cellSize + 1,
-        cellSize - 2,
-        cellSize - 2
-      );
-
-      for (var i = 0; i < snake.length; i += 1) {
-        canvasCtx.fillStyle = i === 0 ? colors.accent : colors.fg;
-        canvasCtx.fillRect(
-          snake[i].x * cellSize + 1,
-          snake[i].y * cellSize + 1,
-          cellSize - 2,
-          cellSize - 2
-        );
-      }
+      drawFood(canvasCtx);
+      drawSnake(canvasCtx);
 
       if (gameOver) {
         canvasCtx.fillStyle = "rgba(0, 0, 0, 0.55)";
