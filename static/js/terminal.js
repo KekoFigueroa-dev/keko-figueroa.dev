@@ -20,6 +20,8 @@
     contact: "/contact",
   };
 
+  var HELP_CMD_WIDTH = 22;
+
   function readSiteIndex() {
     var el = document.getElementById("site-index");
     if (!el) return { pages: [], projects: [], posts: [] };
@@ -549,8 +551,8 @@
   };
 
   Terminal.prototype.printHelpEntry = function (command, description) {
-    this.printLine("  " + command, "terminal-line-help");
-    this.printLine("      " + description, "terminal-line-help-desc");
+    var line = ("   " + command).padEnd(HELP_CMD_WIDTH, " ") + ": " + description;
+    this.printLine(line, "terminal-line-help");
   };
 
   Terminal.prototype.printWelcome = function () {
@@ -656,24 +658,22 @@
   };
 
   Terminal.prototype.cmdHelp = function () {
-    this.printLine("Commands", "terminal-line-help");
-    this.printHelpEntry("help", "Show this command reference.");
-    this.printHelpEntry("clear", "Clear terminal output.");
-    this.printHelpEntry("close", "Close the terminal overlay.");
-    this.printHelpEntry("minimize", "Collapse to the header bar.");
-    this.printHelpEntry("restore", "Expand a minimized terminal.");
-    this.printHelpEntry("dock left", "Pin the terminal to the left edge (full height).");
-    this.printHelpEntry("dock right", "Pin the terminal to the right edge (full height).");
-    this.printHelpEntry("undock", "Return to a floating, draggable window.");
-    this.printHelpEntry("history", "Show commands entered this session.");
-    this.printHelpEntry("ls", "List entries in the current directory (use cd first).");
-    this.printHelpEntry("projects", "List project slugs (shortcut for browsing).");
-    this.printHelpEntry("cd <path>", "Change directory without leaving the page (e.g. cd blog).");
-    this.printHelpEntry("open <path>", "Open a site path in the browser (e.g. open /about).");
-    this.printHelpEntry("open project <slug>", "Open a project detail page.");
-    this.printHelpEntry("theme", "Theme help — use theme list or theme set <name>.");
-    this.printHelpEntry("theme list", "List available color themes.");
-    this.printHelpEntry("theme set <name>", "Apply a theme (matrix, solarized-dark, high-contrast, nord).");
+    this.printHelpEntry("help", "Show this command reference");
+    this.printHelpEntry("clear", "Clears the terminal");
+    this.printHelpEntry("close", "Closes the terminal");
+    this.printHelpEntry("minimize", "Collapse to the header bar");
+    this.printHelpEntry("restore", "Expand a minimized terminal");
+    this.printHelpEntry("dock left", "Dock to the left edge");
+    this.printHelpEntry("dock right", "Dock to the right edge");
+    this.printHelpEntry("undock", "Return to a floating window");
+    this.printHelpEntry("history", "List commands from this session");
+    this.printHelpEntry("ls", "List the current directory");
+    this.printHelpEntry("projects", "List project slugs");
+    this.printHelpEntry("cd", "Change directory in the terminal");
+    this.printHelpEntry("open", "Open a path in the browser");
+    this.printHelpEntry("open project", "Open a project detail page");
+    this.printHelpEntry("theme list", "List available color themes");
+    this.printHelpEntry("theme set", "Change the site color theme");
   };
 
   Terminal.prototype.cmdHistory = function () {
@@ -794,12 +794,9 @@
 
   Terminal.prototype.cmdTheme = function (args) {
     if (!args.length) {
-      this.printLine("Switch the site color theme.", "terminal-line-muted");
-      this.printLine("  theme list", "terminal-line-help");
-      this.printLine("      List available themes.", "terminal-line-help-desc");
-      this.printLine("  theme set <name>", "terminal-line-help");
-      this.printLine("      Apply a theme.", "terminal-line-help-desc");
-      this.printLine("Current: " + this.getTheme(), "terminal-line-muted");
+      this.printHelpEntry("theme list", "List available color themes");
+      this.printHelpEntry("theme set", "Change the site color theme");
+      this.printLine("   Current: " + this.getTheme(), "terminal-line-muted");
       return;
     }
 
