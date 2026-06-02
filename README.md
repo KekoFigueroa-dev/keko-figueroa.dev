@@ -27,7 +27,7 @@ This repository is a server-rendered portfolio focused on back-end/data/AI proje
 | 4 — Ship B1 | Done | `snake` mini-game (lazy-loaded canvas) |
 | 4 — Ship B2/B3 | Planned | Invaders, Tetris (separate ships) |
 
-## Phase 4 — Terminal console (Stripe.dev-inspired)
+## Phase 4 — Retro terminal console
 
 Press **`c`** (or the navbar hint) to open the draggable terminal overlay (lazy-loaded). Run **`snake`** for the Ship B1 mini-game.
 

@@ -49,7 +49,7 @@ PROJECTS = [
         "status_label": "Live",
         "short_summary": (
             "This repo and live site: Flask/Jinja SSR, hardened contact pipeline, "
-            "and a Stripe.dev-style terminal with themes and a lazy-loaded snake game—"
+            "and a retro-style in-page terminal with themes and a lazy-loaded snake game—"
             "all without a CMS or database."
         ),
         "oneliner": (
@@ -74,7 +74,7 @@ PROJECTS = [
         "what_it_is": (
             "A server-rendered personal site and living engineering notebook. The same "
             "codebase hosts project case studies, a static-first blog, a production contact "
-            "form, and an optional terminal console inspired by stripe.dev. The terminal is "
+            "form, and an optional retro-style terminal console overlay. The terminal is "
             "enhancement-only: every route works with JavaScript disabled; the overlay lazy-loads "
             "on first `c` and can run a canvas snake game without polluting the initial bundle."
         ),

@@ -4,7 +4,7 @@
 
 ## Context
 
-The site already uses a terminal-inspired aesthetic (matrix green, mono prompts, CRT grid). [stripe.dev](https://stripe.dev) shows how a **draggable in-page terminal** can feel playful and useful without replacing the main UI. We want optional, contained interactivity: navigate the portfolio by typing commands, switch themes, and reinforce the brand—while keeping the site fully usable with zero JS.
+The site already uses a terminal-inspired aesthetic (matrix green, mono prompts, CRT grid). A **draggable in-page terminal overlay** can feel playful and useful without replacing the main UI. We want optional, contained interactivity: navigate the portfolio by typing commands, switch themes, and reinforce the brand—while keeping the site fully usable with zero JS.
 
 Ship A covers **navigation + themes only**. Games and typed-output animations are out of scope for this ship.
 

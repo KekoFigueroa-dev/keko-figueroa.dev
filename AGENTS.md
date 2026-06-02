@@ -5,7 +5,7 @@ Portfolio repo for **Keko-Figueroa.Dev** (domain: keko-figueroa.dev).
 ## Goals
 
 - Showcase craftsmanship and technical depth for **back-end / data / AI** roles.
-- Terminal-techy aesthetic (modern like stripe.dev + subtle 90s terminal throwback).
+- Terminal-techy aesthetic (retro in-page console + subtle 90s throwback).
 - Fast, server-rendered, minimal JS.
 
 ## Hard constraints
