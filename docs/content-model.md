@@ -2,6 +2,13 @@
 
 ## Projects (`PROJECTS` in `app.py`)
 
+**Display order** is the list order in `app.py` (used on `/`, `/projects`, project pager, and terminal `projects`):
+
+1. `keko-figueroa-dev-portfolio` (this site)
+2. `matrix-themed-sprint-planner`
+3. `token-e-sports-betting`
+4. `deuna-payments-flow` (case study — always last)
+
 Each project object is expected to include:
 
 - `slug`: URL segment for `/projects/<slug>`

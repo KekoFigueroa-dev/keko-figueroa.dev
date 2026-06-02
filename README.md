@@ -23,11 +23,13 @@ This repository is a server-rendered portfolio focused on back-end/data/AI proje
 | 2 | Done | Portfolio routes, project cards, blog, terminal aesthetic |
 | 2.5 | TODO later | Hero visual slidedeck (blocked on artwork; see `AGENTS.md`) |
 | 3 | Done | Contact form (Postmark + Turnstile + rate limit) |
-| 4 | In progress | Terminal console — Ship A + B1 snake on `main`; B2/B3 games next |
+| 4 — Ship A | Done | Draggable terminal overlay (navigation, themes, layout) |
+| 4 — Ship B1 | Done | `snake` mini-game (lazy-loaded canvas) |
+| 4 — Ship B2/B3 | Planned | Invaders, Tetris (separate ships) |
 
 ## Phase 4 — Terminal console (Stripe.dev-inspired)
 
-Press **`c`** on any page to open the draggable terminal overlay (lazy-loaded). Run **`snake`** inside the console for the Ship B1 mini-game.
+Press **`c`** (or the navbar hint) to open the draggable terminal overlay (lazy-loaded). Run **`snake`** for the Ship B1 mini-game.
 
 An optional, draggable terminal overlay adds playful navigation without replacing the server-rendered site. Every page must remain fully usable with JS disabled; the console is an enhancement, not a dependency.
 
@@ -45,9 +47,11 @@ Ship B games share a lazy-loaded host (`static/js/terminal/games/host.js`). Do n
 ### Terminal commands
 
 ```
-help, clear, close, history, ls, cd, open, projects, theme
+help, clear, close, history, ls, cd, open, projects
+theme list | theme set <name>
+minimize | restore | dock left | dock right | undock
 snake                    # Ship B1 — lazy-loads game JS on first run
-# invaders, tetris       # planned (Ship B2, B3)
+# invaders, tetris       # planned (Ship B2, B3) — not implemented
 ```
 
 ### Engineering constraints
@@ -103,7 +107,7 @@ curl http://127.0.0.1:5000/health
 
 ## Editing Project Content
 
-Project data is defined in `PROJECTS` inside `app.py`.
+Project data is defined in `PROJECTS` inside `app.py`. **List order** controls `/`, `/projects`, and the terminal `projects` command (portfolio first, DEUNA case study last).
 
 Each project entry includes:
 

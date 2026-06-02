@@ -9,6 +9,7 @@ This portfolio is a server-rendered Flask app designed for speed and low complex
 - `app.py` — routes + in-memory content (`PROJECTS`, `POSTS`)
 - `templates/` — Jinja templates for pages and shared layout
 - `static/styles.css` — visual system (matrix/terminal aesthetic)
+- `static/js/terminal.js` — lazy-loaded console (first `c` press); games under `static/js/terminal/games/`
 - `Procfile` + `runtime.txt` — Render runtime configuration
 
 ## Request flow

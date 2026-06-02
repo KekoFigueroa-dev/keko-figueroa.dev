@@ -12,7 +12,7 @@ Portfolio repo for **Keko-Figueroa.Dev** (domain: keko-figueroa.dev).
 
 - **No database or CMS** in this repo.
 - **Flask + Jinja templates** only.
-- **Minimal JS** (ideally none).
+- **Minimal JS** — lazy-loaded terminal (`c`) and per-game scripts (`snake`, etc.); no bundle on first paint.
 - Keep `/health` returning `{ "status": "ok" }`.
 - CSS lives in `static/styles.css`.
 
@@ -40,11 +40,12 @@ Portfolio repo for **Keko-Figueroa.Dev** (domain: keko-figueroa.dev).
 | `/contact` | `contact.html` |
 | `/health` | JSON (no template) |
 
-## Project lineup
+## Project lineup (`PROJECTS` order in `app.py`)
 
-1. **Matrix-themed Sprint Planner** (public) — live demo + repo
-2. **DEUNA Payments Flow** (public, docs-first) — repo only
-3. **token_e-sports_betting** (in progress) — repo only, label as in-progress
+1. **keko-figueroa.dev** (this site) — live + repo; terminal + snake
+2. **Matrix-themed Sprint Planner** — live demo + repo
+3. **token_e-sports_betting** (in progress) — private repo
+4. **DEUNA Payments Flow** (case study) — last; repo only, docs-first
 
 ## Blog (static-first)
 
@@ -62,10 +63,11 @@ Three seed posts on fintech/idempotency, ledger wallets, and pragmatic RAG. Add 
 - **Phase 2** (done): Full portfolio routes, project cards, blog, matrix-green terminal aesthetic.
 - **Phase 2.5** (planned): Hero visual slidedeck — see [Hero visual](#hero-visual) below.
 - **Phase 3** (done): Contact form POST (Postmark + Turnstile + rate limit).
-- **Phase 4** (in progress): Stripe.dev-inspired draggable terminal console.
-  - **Ship A:** navigation + themes — done on `main`
-  - **Ship B (mini-arcade):** lazy-loaded canvas games — B1 snake (ADR 0008); B2 invaders / B3 tetris planned (ADR 0009)
-  - Test checklists: `docs/testing.md`
+- **Phase 4** (Ship A + B1 done; B2/B3 planned): draggable terminal + lazy-loaded mini-games.
+  - **Ship A:** navigation, themes, dock/minimize — done
+  - **Ship B1:** `snake` — done (ADR 0008, 0009)
+  - **Ship B2/B3:** invaders, tetris — not started
+  - Test: `docs/testing.md`
 
 ## Hero visual
 

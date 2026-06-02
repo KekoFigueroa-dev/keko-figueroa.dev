@@ -44,15 +44,18 @@ Do not commit values. Set them in the Render dashboard only.
 
 The contact template loads the Turnstile script only when `TURNSTILE_ENABLED` is true and a site key is present. The server verifies the `cf-turnstile-response` token on every POST.
 
+## Terminal console (no extra deploy config)
+
+Ship A + B1 ship as static assets (`static/js/terminal.js`, `static/js/terminal/games/*`). No Render env vars. Lazy-loaded in the browser; safe to verify after any deploy via `docs/testing.md`.
+
 ## Smoke test after deploy
 
-- `/`
-- `/projects`
-- `/projects/<slug>` (all project slugs)
-- `/blog`
-- `/about`
-- `/contact`
-- `/health`
+- `/` — featured projects: portfolio → sprint planner → token → DEUNA (last)
+- `/projects` — same order; DEUNA labeled **Case study**
+- `/projects/<slug>` for each slug
+- `/blog`, `/about`, `/contact`
+- `/health` → `{"status":"ok"}`
+- Optional: `c` → `snake` on production
 
 ## Contact form verification checklist
 

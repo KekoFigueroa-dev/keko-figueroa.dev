@@ -1,78 +1,63 @@
 # Testing Checklists
 
-Manual verification steps for features that need human eyes or browser DevTools.
+Manual verification for features that need a browser or DevTools.
 
 ---
 
 ## Phase 4 — Terminal console (Ship A)
 
-**Status:** Implemented on `main` — run when validating Ship A or after console changes.
+**Status:** Done on `main` — run after terminal or layout changes.
 
 ### Toggle and overlay
 
-- [ ] Press `c` opens the console overlay
-- [ ] Press `c` again (or run `close`) closes the overlay
-- [ ] Escape closes the overlay while focused inside it
-- [ ] Overlay is draggable with **mouse** (title bar or designated handle)
-- [ ] Overlay is draggable with **touch** on mobile/tablet
-- [ ] Site content remains readable and clickable when overlay is closed
+- [ ] Press `c` opens the console (ignored while typing in form fields)
+- [ ] Navbar **Press c — terminal** button opens the console
+- [ ] Press `c` again (or `close`) closes the overlay
+- [ ] Escape closes the overlay when no game is running
+- [ ] Drag title bar repositions the floating window (mouse + touch)
+- [ ] Site remains usable when the overlay is closed
 
-### Persistence
+### Layout chrome
 
-- [ ] Drag position is saved to `localStorage` and restored on reload
-- [ ] Selected theme is saved to `localStorage` and restored on reload
-- [ ] Clearing site data resets to defaults without errors
+- [ ] `minimize` / `restore` collapse and expand the body
+- [ ] `dock left` / `dock right` pin full-height side panels
+- [ ] `undock` returns to a floating window
+- [ ] Position and theme persist in `localStorage` across reload
 
 ### Commands (Ship A)
 
-- [ ] `help` lists commands
-- [ ] `clear` clears output
-- [ ] `close` closes overlay
-- [ ] `history` shows recent commands
-- [ ] `ls` lists routes
-- [ ] `cd <page>` navigates correctly (e.g. `cd projects` → `/projects`)
-- [ ] `open <path>` navigates correctly (e.g. `open /about`)
-- [ ] `projects` lists project slugs from site data
-- [ ] `open project <slug>` navigates to `/projects/<slug>`
-- [ ] `theme <name>` switches console theme visibly
-- [ ] Unknown commands show a friendly error, not a stack trace
+- [ ] `help` — single-line command reference
+- [ ] `clear`, `close`, `history`
+- [ ] `ls`, `cd`, `open`, `open project <slug>`, `projects` (order matches `PROJECTS` in `app.py`)
+- [ ] `theme list`, `theme set <name>` update site + terminal colors
+- [ ] Unknown commands show a friendly error
 
 ### Performance and fallback
 
-- [ ] **Lazy-load:** Network tab shows no terminal JS until first `c` press
-- [ ] **JS disabled:** full site navigation works via header/footer links; no broken layout
-- [ ] **`prefers-reduced-motion`:** reduced or no motion on open/drag/theme transitions
-- [ ] Console closed: no measurable impact on scroll/interaction (no runaway timers)
-
-### Accessibility (Ship A)
-
-- [ ] Focus moves into overlay when opened; returns on close
-- [ ] Tab order is logical inside overlay
-- [ ] Command output is perceivable (not color-only)
+- [ ] **Lazy-load:** no `terminal.js` until first `c` (Network tab)
+- [ ] **JS disabled:** header/footer navigation still works
+- [ ] **`prefers-reduced-motion`:** no essential motion required
+- [ ] Overlay closed: no runaway timers or listeners
 
 ---
 
-## Phase 4 — Snake mini-game (Ship B1)
+## Phase 4 — Snake (Ship B1)
 
-**Status:** Implemented — run when validating snake or after game-host changes.
+**Status:** Done on `main` — run after game or host changes.
 
-- [ ] Running `snake` fills the terminal body with the game canvas
-- [ ] Arrow keys and WASD control the snake
-- [ ] `q` quits back to the terminal prompt (shows score if &gt; 0)
-- [ ] Losing ends the game, prints score in the terminal, and returns to the prompt
-- [ ] Escape quits back to the terminal prompt
-- [ ] Closing the terminal exits the game cleanly (no timers continue)
-- [ ] Minimizing the terminal exits the game cleanly
-- [ ] Theme colors match the current site theme (`theme set` then `snake`)
-- [ ] No console errors after exit; navigation commands still work
-- [ ] **Lazy-load:** Network tab shows no `host.js` / `snake.js` until first `snake` command
-- [ ] Contact form typing unaffected (`c` ignored in inputs; game keys inactive when terminal closed)
+- [ ] `snake` fills the terminal body (output + prompt hidden)
+- [ ] Arrow keys / WASD move; edges wrap (no wall death)
+- [ ] Snake uses theme accent color (`--terminal-accent`)
+- [ ] Self-collision ends run; score prints in the terminal log
+- [ ] `q` or Escape quits; closing or minimizing the terminal stops the game
+- [ ] **Lazy-load:** no `host.js` / `snake.js` until first `snake`
+- [ ] After exit, Ship A commands work normally
 
 ---
 
 ## Contact form
 
-See [docs/deploy.md — Contact form verification checklist](deploy.md#contact-form-verification-checklist).
+See [docs/deploy.md — Contact form verification](deploy.md#contact-form-verification-checklist).
 
 ## Deploy smoke test
 

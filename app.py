@@ -43,6 +43,67 @@ limiter = Limiter(
 # Project content is intentionally in code (static-first). Keep slugs stable for URLs.
 PROJECTS = [
     {
+        "slug": "keko-figueroa-dev-portfolio",
+        "title": "keko-figueroa.dev",
+        "type": "this_site",
+        "status_label": "Live",
+        "short_summary": (
+            "The portfolio itself: server-rendered Flask/Jinja site built for speed, "
+            "clarity, and honest project storytelling."
+        ),
+        "oneliner": (
+            "A fast, server-rendered portfolio built with Flask + Jinja to showcase "
+            "back-end/data/AI work without front-end bloat."
+        ),
+        "live_url": "https://keko-figueroa.dev",
+        "repo_url": "https://github.com/KekoFigueroa-dev/keko-figueroa.dev",
+        "repo_label": "Repo",
+        "key_points": [
+            "Flask + Jinja + static CSS (no CMS, no database)",
+            "Terminal-techy matrix aesthetic with minimal JS",
+            "Content-as-code for projects and blog posts",
+        ],
+        "problem": (
+            "Most portfolios look polished but hide technical depth. I needed one that "
+            "is fast, maintainable, and explicit about engineering trade-offs."
+        ),
+        "what_it_is": (
+            "A production-ready personal site that doubles as a case study in practical "
+            "web architecture choices and clear technical communication."
+        ),
+        "constraints": [
+            "Keep stack simple and deployment-friendly (Render + Cloudflare).",
+            "Avoid DB/CMS overhead for content that changes infrequently.",
+            "Preserve speed and readability across desktop and mobile.",
+        ],
+        "architecture": (
+            "Server-rendered Flask routes with Jinja templates, static CSS for the "
+            "visual system, and in-memory content models in Python."
+        ),
+        "architecture_points": [
+            "App entry: app.py",
+            "Templates: templates/",
+            "Styles: static/styles.css",
+            "Content source: PROJECTS + POSTS in code",
+        ],
+        "key_decisions": [
+            "Flask/Jinja over SPA for performance, simplicity, and maintenance.",
+            "Minimal JS to reduce failure modes and keep first render fast.",
+            "No database; projects/posts are code-reviewed content.",
+            "Deploy on Render with Cloudflare for DNS/SSL and straightforward ops.",
+        ],
+        "what_shipped": [
+            "Phase 2: full site routes, project cards, blog, and terminal aesthetic.",
+            "Phase 3: project detail pages and improved docs/ADRs.",
+            "Operational baseline: /health endpoint, Render-ready config, mobile-friendly UI.",
+        ],
+        "what_next": [
+            "Phase 2.5 hero visual slidedeck.",
+            "Optional contact form with light anti-spam controls.",
+            "Continuous polishing of case-study depth and writing.",
+        ],
+    },
+    {
         "slug": "matrix-themed-sprint-planner",
         "title": "Matrix-themed Sprint Planner",
         "type": "deployed",
@@ -97,69 +158,6 @@ PROJECTS = [
         "what_next": [
             "Velocity/burndown insights for planning quality.",
             "More team automation hooks around sprint lifecycle events.",
-        ],
-    },
-    {
-        "slug": "deuna-payments-flow",
-        "title": "DEUNA Payments Flow (Case Study)",
-        "type": "case_study",
-        "status_label": "Case study",
-        "short_summary": (
-            "A documentation-first payments integration + troubleshooting case "
-            "study focused on orchestrator mishaps and practical RCA."
-        ),
-        "oneliner": (
-            "A documentation-first payments integration + troubleshooting case study—"
-            "meant to help teams navigate the common mishaps of working with a "
-            "payment orchestrator."
-        ),
-        "live_url": None,
-        "repo_url": "https://github.com/KekoFigueroa-dev/DEUNA-payments-flow",
-        "repo_label": "Repo",
-        "key_points": [
-            "Core flow request shapes (user → auth → order → purchase v1/v2 → refund)",
-            "Failure map: sandbox inconsistencies, schema mismatches, PSP/issuer declines",
-            "Data-first RCA with SQL analysis patterns",
-        ],
-        "problem": (
-            "Teams integrating with orchestrators often lose time in ambiguous docs, "
-            "inconsistent sandbox behavior, and unclear failure ownership."
-        ),
-        "what_it_is": (
-            "A documentation-first case study and playbook for integration and "
-            "troubleshooting workflows around DEUNA and downstream providers."
-        ),
-        "constraints": [
-            "Must stay practical for operators under incident pressure.",
-            "Needs to be useful without a full product UI around it.",
-            "Has to connect request shapes with real-world failure diagnostics.",
-        ],
-        "architecture": (
-            "Structured docs + request collections + SQL examples, organized as an "
-            "operational troubleshooting reference instead of a deployed app."
-        ),
-        "architecture_points": [
-            "requests/: step-by-step flow examples",
-            "sql/: incident and decline analysis queries",
-            "troubleshooting guide: DEUNA → PSP → issuer/network",
-        ],
-        "key_decisions": [
-            "Treat this as a case study/playbook, not a deployed checkout.",
-            "Organize by end-to-end flow sequence, not endpoint catalog.",
-            "Pair request examples with failure patterns and RCA queries.",
-        ],
-        "what_shipped": [
-            "Step-by-step request-shape guidance for core payment/refund flow.",
-            "Common failure scenarios and where to investigate first.",
-            "SQL templates for declines, incident windows, and V2 anomalies.",
-        ],
-        "what_next": [
-            "Expand webhook replay and idempotency troubleshooting.",
-            "Add deeper reconciliation templates for settlement operations.",
-        ],
-        "notes": [
-            "This repo is a case study and playbook. It is not a deployed payment app.",
-            "Purpose: help teams navigate common mishaps when integrating with a payment orchestrator.",
         ],
     },
     {
@@ -230,64 +228,66 @@ PROJECTS = [
         ],
     },
     {
-        "slug": "keko-figueroa-dev-portfolio",
-        "title": "keko-figueroa.dev",
-        "type": "this_site",
-        "status_label": "Live",
+        "slug": "deuna-payments-flow",
+        "title": "DEUNA Payments Flow (Case Study)",
+        "type": "case_study",
+        "status_label": "Case study",
         "short_summary": (
-            "The portfolio itself: server-rendered Flask/Jinja site built for speed, "
-            "clarity, and honest project storytelling."
+            "A documentation-first payments integration + troubleshooting case "
+            "study focused on orchestrator mishaps and practical RCA."
         ),
         "oneliner": (
-            "A fast, server-rendered portfolio built with Flask + Jinja to showcase "
-            "back-end/data/AI work without front-end bloat."
+            "A documentation-first payments integration + troubleshooting case study—"
+            "meant to help teams navigate the common mishaps of working with a "
+            "payment orchestrator."
         ),
-        "live_url": "https://keko-figueroa.dev",
-        "repo_url": "https://github.com/KekoFigueroa-dev/keko-figueroa.dev",
+        "live_url": None,
+        "repo_url": "https://github.com/KekoFigueroa-dev/DEUNA-payments-flow",
         "repo_label": "Repo",
         "key_points": [
-            "Flask + Jinja + static CSS (no CMS, no database)",
-            "Terminal-techy matrix aesthetic with minimal JS",
-            "Content-as-code for projects and blog posts",
+            "Core flow request shapes (user → auth → order → purchase v1/v2 → refund)",
+            "Failure map: sandbox inconsistencies, schema mismatches, PSP/issuer declines",
+            "Data-first RCA with SQL analysis patterns",
         ],
         "problem": (
-            "Most portfolios look polished but hide technical depth. I needed one that "
-            "is fast, maintainable, and explicit about engineering trade-offs."
+            "Teams integrating with orchestrators often lose time in ambiguous docs, "
+            "inconsistent sandbox behavior, and unclear failure ownership."
         ),
         "what_it_is": (
-            "A production-ready personal site that doubles as a case study in practical "
-            "web architecture choices and clear technical communication."
+            "A documentation-first case study and playbook for integration and "
+            "troubleshooting workflows around DEUNA and downstream providers."
         ),
         "constraints": [
-            "Keep stack simple and deployment-friendly (Render + Cloudflare).",
-            "Avoid DB/CMS overhead for content that changes infrequently.",
-            "Preserve speed and readability across desktop and mobile.",
+            "Must stay practical for operators under incident pressure.",
+            "Needs to be useful without a full product UI around it.",
+            "Has to connect request shapes with real-world failure diagnostics.",
         ],
         "architecture": (
-            "Server-rendered Flask routes with Jinja templates, static CSS for the "
-            "visual system, and in-memory content models in Python."
+            "Structured docs + request collections + SQL examples, organized as an "
+            "operational troubleshooting reference instead of a deployed app."
         ),
         "architecture_points": [
-            "App entry: app.py",
-            "Templates: templates/",
-            "Styles: static/styles.css",
-            "Content source: PROJECTS + POSTS in code",
+            "requests/: step-by-step flow examples",
+            "sql/: incident and decline analysis queries",
+            "troubleshooting guide: DEUNA → PSP → issuer/network",
         ],
         "key_decisions": [
-            "Flask/Jinja over SPA for performance, simplicity, and maintenance.",
-            "Minimal JS to reduce failure modes and keep first render fast.",
-            "No database; projects/posts are code-reviewed content.",
-            "Deploy on Render with Cloudflare for DNS/SSL and straightforward ops.",
+            "Treat this as a case study/playbook, not a deployed checkout.",
+            "Organize by end-to-end flow sequence, not endpoint catalog.",
+            "Pair request examples with failure patterns and RCA queries.",
         ],
         "what_shipped": [
-            "Phase 2: full site routes, project cards, blog, and terminal aesthetic.",
-            "Phase 3: project detail pages and improved docs/ADRs.",
-            "Operational baseline: /health endpoint, Render-ready config, mobile-friendly UI.",
+            "Step-by-step request-shape guidance for core payment/refund flow.",
+            "Common failure scenarios and where to investigate first.",
+            "SQL templates for declines, incident windows, and V2 anomalies.",
         ],
         "what_next": [
-            "Phase 2.5 hero visual slidedeck.",
-            "Optional contact form with light anti-spam controls.",
-            "Continuous polishing of case-study depth and writing.",
+            "Expand webhook replay and idempotency troubleshooting.",
+            "Add deeper reconciliation templates for settlement operations.",
+        ],
+        "notes": [
+            "This repo is a case study and playbook. It is not a deployed payment app.",
+            "Purpose: help teams navigate common mishaps when integrating with a payment orchestrator.",
         ],
     },
 ]
