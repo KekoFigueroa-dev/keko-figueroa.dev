@@ -52,14 +52,21 @@ Manual verification steps for features that need human eyes or browser DevTools.
 
 ---
 
-## Phase 4 — Snake mini-game (Ship B)
+## Phase 4 — Snake mini-game (Ship B1)
 
-**Status:** Planned — add checklist when Ship B is implemented.
+**Status:** Implemented — run when validating snake or after game-host changes.
 
-- [ ] `snake` starts game inside console only
-- [ ] `q` or `close` exits game and returns to shell
-- [ ] Game does not run when overlay is closed
+- [ ] Running `snake` opens a canvas in the terminal
+- [ ] Arrow keys and WASD control the snake
+- [ ] `q` quits back to the terminal prompt
+- [ ] `r` restarts after game over (and during play)
+- [ ] Escape quits back to the terminal prompt
+- [ ] Closing the terminal exits the game cleanly (no timers continue)
+- [ ] Minimizing the terminal exits the game cleanly
+- [ ] Theme colors match the current site theme (`theme set` then `snake`)
 - [ ] No console errors after exit; navigation commands still work
+- [ ] **Lazy-load:** Network tab shows no `host.js` / `snake.js` until first `snake` command
+- [ ] Contact form typing unaffected (`c` ignored in inputs; game keys inactive when terminal closed)
 
 ---
 

@@ -1,5 +1,5 @@
 /**
- * Ship A terminal console — navigation + themes only (no games).
+ * Terminal console — navigation, themes, and lazy-loaded mini-games.
  * Loaded lazily on first `c` press via inline bootstrap in base.html.
  */
 (function () {
@@ -109,6 +109,8 @@
     this.floatSnapshot = null;
     this.dragState = null;
     this.resizeObserver = null;
+    this.activeGame = null;
+    this.gameHostLoading = null;
   }
 
   Terminal.prototype.init = function () {
@@ -182,6 +184,7 @@
 
     this.formEl.addEventListener("submit", function (event) {
       event.preventDefault();
+      if (self.activeGame) return;
       var value = self.inputEl.value;
       self.inputEl.value = "";
       self.historyCursor = -1;
@@ -192,6 +195,7 @@
     });
 
     this.inputEl.addEventListener("keydown", function (event) {
+      if (self.activeGame) return;
       if (event.key === "Escape") {
         event.preventDefault();
         self.close();
@@ -255,6 +259,7 @@
     }
     document.addEventListener("keydown", function (event) {
       if (!self.isOpen) return;
+      if (self.activeGame) return;
       if (event.key === "Escape") {
         event.preventDefault();
         self.close();
@@ -455,6 +460,7 @@
   };
 
   Terminal.prototype.minimize = function (save) {
+    this.stopGame("minimize");
     if (!this.isOpen) return;
     this.isMinimized = true;
     this.root.classList.add("is-minimized");
@@ -542,6 +548,54 @@
     } catch (e) {}
   };
 
+  Terminal.prototype.stopGame = function (reason) {
+    if (window.KekoGameHost && this.activeGame) {
+      window.KekoGameHost.stop(this, reason);
+    }
+  };
+
+  Terminal.prototype.setGameInputLocked = function (locked) {
+    if (!this.inputEl || !this.formEl) return;
+    this.inputEl.disabled = locked;
+    this.formEl.classList.toggle("is-game-active", locked);
+    if (!locked) this.inputEl.focus();
+  };
+
+  Terminal.prototype.ensureGameHost = function () {
+    if (window.KekoGameHost) return Promise.resolve();
+    if (this.gameHostLoading) return this.gameHostLoading;
+
+    var self = this;
+    var base = "/static/js/terminal/games/";
+    if (window.KekoGameHost && window.KekoGameHost.gamesBaseUrl) {
+      base = window.KekoGameHost.gamesBaseUrl();
+    } else {
+      var scripts = document.getElementsByTagName("script");
+      for (var i = scripts.length - 1; i >= 0; i -= 1) {
+        var src = scripts[i].src;
+        if (src.indexOf("terminal.js") !== -1) {
+          base = src.replace(/terminal\.js(\?.*)?$/, "terminal/games/");
+          break;
+        }
+      }
+    }
+
+    this.gameHostLoading = new Promise(function (resolve, reject) {
+      var script = document.createElement("script");
+      script.src = base + "host.js";
+      script.onload = function () {
+        self.gameHostLoading = null;
+        resolve();
+      };
+      script.onerror = function () {
+        self.gameHostLoading = null;
+        reject(new Error("host load failed"));
+      };
+      document.body.appendChild(script);
+    });
+    return this.gameHostLoading;
+  };
+
   Terminal.prototype.printLine = function (text, className) {
     var line = document.createElement("div");
     line.className = className || "terminal-line";
@@ -574,6 +628,7 @@
   };
 
   Terminal.prototype.close = function () {
+    this.stopGame("close");
     this.isOpen = false;
     this.isMinimized = false;
     this.root.classList.remove("is-open", "is-minimized");
@@ -608,6 +663,10 @@
   };
 
   Terminal.prototype.runCommand = function (raw) {
+    if (this.activeGame) {
+      this.printLine("Game running — press q to quit.", "terminal-line-error");
+      return;
+    }
     var line = normalizeInput(raw);
     var parts = line.split(" ");
     var cmd = parts[0].toLowerCase();
@@ -652,6 +711,9 @@
       case "theme":
         this.cmdTheme(parts.slice(1));
         break;
+      case "snake":
+        this.cmdSnake();
+        break;
       default:
         this.printLine('Unknown command: "' + cmd + '". Type help.', "terminal-line-error");
     }
@@ -674,6 +736,7 @@
     this.printHelpEntry("open project", "Open a project detail page");
     this.printHelpEntry("theme list", "List available color themes");
     this.printHelpEntry("theme set", "Change the site color theme");
+    this.printHelpEntry("snake", "Play snake in the terminal");
   };
 
   Terminal.prototype.cmdHistory = function () {
@@ -830,6 +893,24 @@
     }
 
     this.printLine('Usage: theme list  |  theme set <name>', "terminal-line-error");
+  };
+
+  Terminal.prototype.cmdSnake = function () {
+    var self = this;
+
+    this.ensureGameHost()
+      .then(function () {
+        return window.KekoGameHost.loadGame("snake");
+      })
+      .then(function () {
+        if (!window.KekoTerminalGames || !window.KekoTerminalGames.snake) {
+          throw new Error("snake module missing");
+        }
+        window.KekoGameHost.start(self, window.KekoTerminalGames.snake);
+      })
+      .catch(function () {
+        self.printLine("Could not load snake. Try again.", "terminal-line-error");
+      });
   };
 
   window.KekoTerminal = {

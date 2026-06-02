@@ -23,11 +23,11 @@ This repository is a server-rendered portfolio focused on back-end/data/AI proje
 | 2 | Done | Portfolio routes, project cards, blog, terminal aesthetic |
 | 2.5 | TODO later | Hero visual slidedeck (blocked on artwork; see `AGENTS.md`) |
 | 3 | Done | Contact form (Postmark + Turnstile + rate limit) |
-| 4 | In progress | Draggable terminal console — Ship A on `main`; Ship B next |
+| 4 | In progress | Terminal console — Ship A + B1 snake on `main`; B2/B3 games next |
 
 ## Phase 4 — Terminal console (Stripe.dev-inspired)
 
-Press **`c`** on any page to open the draggable terminal overlay (lazy-loaded). Ship B (snake) is not included yet.
+Press **`c`** on any page to open the draggable terminal overlay (lazy-loaded). Run **`snake`** inside the console for the Ship B1 mini-game.
 
 An optional, draggable terminal overlay adds playful navigation without replacing the server-rendered site. Every page must remain fully usable with JS disabled; the console is an enhancement, not a dependency.
 
@@ -36,17 +36,18 @@ An optional, draggable terminal overlay adds playful navigation without replacin
 | Ship | Scope | Status |
 |---|---|---|
 | **Ship A** | Terminal navigation + themes | Done |
-| **Ship B** | Snake mini-game inside the console | Next |
+| **Ship B1** | Snake mini-game (canvas) | Done |
+| **Ship B2** | Invaders mini-game | Planned |
+| **Ship B3** | Tetris mini-game | Planned (after framework proven) |
 
-Do not combine Ship A and Ship B in one merge unless explicitly requested.
+Ship B games share a lazy-loaded host (`static/js/terminal/games/host.js`). Do not combine multiple Ship B games in one merge unless explicitly requested.
 
-### Ship A — commands
+### Terminal commands
 
 ```
-help, clear, close, history
-ls, cd <page>, open <path>
-projects, open project <slug>
-theme <name>
+help, clear, close, history, ls, cd, open, projects, theme
+snake                    # Ship B1 — lazy-loads game JS on first run
+# invaders, tetris       # planned (Ship B2, B3)
 ```
 
 ### Engineering constraints
@@ -57,8 +58,8 @@ theme <name>
 - **Scope** limited to the overlay — no global key hijacking outside the console
 - **Performance** — no timers or listeners when the overlay is closed
 
-ADRs: [0007-terminal-console-overlay.md](docs/decisions/0007-terminal-console-overlay.md), [0008-terminal-console-games-snake.md](docs/decisions/0008-terminal-console-games-snake.md).  
-Test checklist: [docs/testing.md](docs/testing.md#phase-4--terminal-console-ship-a).
+ADRs: [0007-terminal-console-overlay.md](docs/decisions/0007-terminal-console-overlay.md), [0008-terminal-console-games-snake.md](docs/decisions/0008-terminal-console-games-snake.md), [0009-terminal-console-games-framework.md](docs/decisions/0009-terminal-console-games-framework.md).  
+Test checklists: [Ship A](docs/testing.md#phase-4--terminal-console-ship-a), [Ship B1 snake](docs/testing.md#phase-4--snake-mini-game-ship-b1).
 
 ## Stack
 

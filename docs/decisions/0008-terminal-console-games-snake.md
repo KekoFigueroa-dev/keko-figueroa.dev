@@ -1,26 +1,30 @@
-# ADR 0008: Terminal Console Games — Snake (Phase 4 — Ship B)
+# ADR 0008: Terminal Console Games — Snake (Phase 4 — Ship B1)
 
-**Status:** Planned (not implemented)
+**Status:** Accepted (implemented in Ship B1)
 
 ## Context
 
-After Ship A ships a stable console (navigation, themes, persistence), a small easter egg can add personality without changing how the portfolio works. Snake is a familiar terminal mini-game that fits the aesthetic—but it is **novelty**, not core UX.
+After Ship A shipped a stable console (navigation, themes, persistence), a small easter egg can add personality without changing how the portfolio works. Snake is a familiar terminal mini-game that fits the aesthetic—but it is **novelty**, not core UX.
+
+The multi-game plan splits Ship B into incremental PRs: **B1 snake**, **B2 invaders**, **B3 tetris**. This ADR covers snake only.
 
 ## Decision
 
-Implement **snake as a separate ship (Ship B)** that runs **only inside the terminal overlay window**:
+Implement **snake as Ship B1** inside the terminal overlay, using the shared game host ([ADR 0009](0009-terminal-console-games-framework.md)):
 
-- Entry via an explicit command (e.g. `snake`) — not auto-started
-- Game loop and rendering contained within the console pane; no full-page canvas takeover
-- Ship B PRs must not refactor Ship A navigation/parser unless fixing a shared bug
-- No typed-output animations or other games in this ship unless added as future ADRs
+- Entry via explicit `snake` command — not auto-started
+- Canvas rendering in a panel above the command input; no full-page takeover
+- Vanilla JS only; lazy-load `host.js` then `snake.js` on first `snake` invocation
+- Universal quit/restart: `q`, Escape, `r` (handled by host + game)
+- Theme colors read from `--terminal-*` and `--accent-0` CSS variables
 
-Ship A must be merged and stable before Ship B work begins.
+Ship B1 must not implement invaders or tetris.
 
 ## Consequences
 
-- Extra JS surface area — keep snake module self-contained and lazy-loaded with (or after) the console bundle
-- Must not degrade site performance when the console is closed or snake is not running
-- Pause/exit paths required so snake never traps the user (`q` / `close` / overlay close)
-- Test checklist for Ship B will be added to `docs/testing.md` when implementation starts
-- If snake bundle size or frame timing hurts mobile, cap FPS or disable on narrow viewports (document in Ship B PR)
+- Snake module is self-contained in `static/js/terminal/games/snake.js`.
+- No timers or listeners when the overlay is closed or snake is not running.
+- Pause/exit paths required so snake never traps the user (`q` / Escape / overlay close).
+- If snake bundle size or tick timing hurts mobile, cap grid size or tick rate in a follow-up (document in PR).
+
+**Supersedes:** “Planned (not implemented)” status from the original ADR draft.

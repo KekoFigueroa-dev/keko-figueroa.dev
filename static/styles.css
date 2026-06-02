@@ -1236,6 +1236,42 @@ html[data-theme="nord"] {
   border-radius: 4px;
 }
 
+.terminal-input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.terminal-input-row.is-game-active .terminal-prompt {
+  color: var(--terminal-muted);
+}
+
+.terminal-game-panel {
+  flex: 0 0 auto;
+  padding: 0.55rem 0.75rem 0.35rem;
+  border-top: 1px solid var(--terminal-border);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.terminal-game-hud {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  color: var(--terminal-accent);
+}
+
+.terminal-game-canvas {
+  display: block;
+  max-width: 100%;
+  border: 1px solid var(--terminal-border);
+  border-radius: 4px;
+  image-rendering: pixelated;
+}
+
+.terminal-game-controls {
+  margin: 0.35rem 0 0;
+  font-size: 0.68rem;
+  color: var(--terminal-muted);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .terminal-overlay {
     transition: none;
