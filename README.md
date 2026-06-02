@@ -21,15 +21,13 @@ This repository is a server-rendered portfolio focused on back-end/data/AI proje
 |---|---|---|
 | 1 | Done | Deployable scaffold, `/health`, Render config |
 | 2 | Done | Portfolio routes, project cards, blog, terminal aesthetic |
-| 2.5 | Planned | Hero visual slidedeck (see `AGENTS.md`) |
+| 2.5 | TODO later | Hero visual slidedeck (blocked on artwork; see `AGENTS.md`) |
 | 3 | Done | Contact form (Postmark + Turnstile + rate limit) |
-| 4 | Next | Stripe.dev-inspired draggable terminal console — see below |
+| 4 | In progress | Draggable terminal console — Ship A on `main`; Ship B next |
 
 ## Phase 4 — Terminal console (Stripe.dev-inspired)
 
-**Status: Ship A implemented on branch `feature/terminal-console-ship-a` (not merged yet).**
-
-Press **`c`** on any page to open the draggable terminal overlay (lazy-loaded). Ship B (snake) is not included.
+Press **`c`** on any page to open the draggable terminal overlay (lazy-loaded). Ship B (snake) is not included yet.
 
 An optional, draggable terminal overlay adds playful navigation without replacing the server-rendered site. Every page must remain fully usable with JS disabled; the console is an enhancement, not a dependency.
 
@@ -37,12 +35,12 @@ An optional, draggable terminal overlay adds playful navigation without replacin
 
 | Ship | Scope | Status |
 |---|---|---|
-| **Ship A** | Terminal navigation + themes | Implemented (pending merge) |
-| **Ship B** | Snake mini-game inside the console | Planned (after Ship A) |
+| **Ship A** | Terminal navigation + themes | Done |
+| **Ship B** | Snake mini-game inside the console | Next |
 
 Do not combine Ship A and Ship B in one merge unless explicitly requested.
 
-### Ship A — planned commands
+### Ship A — commands
 
 ```
 help, clear, close, history
