@@ -1245,31 +1245,48 @@ html[data-theme="nord"] {
   color: var(--terminal-muted);
 }
 
-.terminal-game-panel {
-  flex: 0 0 auto;
-  padding: 0.55rem 0.75rem 0.35rem;
-  border-top: 1px solid var(--terminal-border);
-  background: rgba(0, 0, 0, 0.12);
+/* Full-body game mode — output + input hidden; stage fills terminal body */
+.terminal-body.is-game-mode .terminal-output,
+.terminal-body.is-game-mode .terminal-input-row {
+  display: none;
+}
+
+.terminal-game-stage {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 0.5rem 0.75rem 0.75rem;
+  background: var(--terminal-bg);
 }
 
 .terminal-game-hud {
-  margin: 0 0 0.35rem;
+  flex: 0 0 auto;
+  width: 100%;
+  margin: 0 0 0.5rem;
   font-size: 0.75rem;
   color: var(--terminal-accent);
+  text-align: center;
+}
+
+.terminal-game-canvas-wrap {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
 }
 
 .terminal-game-canvas {
   display: block;
   max-width: 100%;
+  max-height: 100%;
   border: 1px solid var(--terminal-border);
   border-radius: 4px;
   image-rendering: pixelated;
-}
-
-.terminal-game-controls {
-  margin: 0.35rem 0 0;
-  font-size: 0.68rem;
-  color: var(--terminal-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {

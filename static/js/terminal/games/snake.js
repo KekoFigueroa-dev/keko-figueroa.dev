@@ -1,5 +1,5 @@
 /**
- * Snake — canvas mini-game for the terminal overlay.
+ * Snake — canvas mini-game for the terminal overlay (full-body mode).
  * Factory: KekoTerminalGames.snake()
  */
 (function () {
@@ -40,6 +40,7 @@
     var score = 0;
     var tickTimer = null;
     var gameOver = false;
+    var resizeHandler = null;
 
     function randomFood() {
       var spot;
@@ -69,9 +70,14 @@
     }
 
     function resizeCanvas() {
-      if (!canvas || !ctx) return;
-      var maxWidth = canvas.parentElement.clientWidth || 280;
-      var maxHeight = 280;
+      if (!canvas || !gameCtx) return;
+      var stage = canvas.parentElement;
+      if (!stage) return;
+
+      var maxWidth = stage.clientWidth - 16;
+      var maxHeight = stage.clientHeight - 56;
+      if (maxWidth < 40 || maxHeight < 40) return;
+
       cellSize = Math.max(8, Math.floor(Math.min(maxWidth / GRID, maxHeight / GRID)));
       canvas.width = cellSize * GRID;
       canvas.height = cellSize * GRID;
@@ -80,13 +86,12 @@
 
     function updateHud() {
       if (!hud) return;
-      hud.textContent = "Score: " + score;
+      hud.textContent = "Snake — score: " + score + "  ·  Arrow/WASD move  ·  q quit";
     }
 
     function setDirection(next) {
       if (gameOver) return;
       var active = pendingDir || direction;
-      // Ignore 180° reversals on the same tick.
       if (active.x + next.x === 0 && active.y + next.y === 0) return;
       pendingDir = next;
     }
@@ -131,8 +136,15 @@
     }
 
     function endGame() {
+      if (gameOver) return;
       gameOver = true;
+      stopLoop();
       draw();
+      if (gameCtx && typeof gameCtx.onGameOver === "function") {
+        window.setTimeout(function () {
+          gameCtx.onGameOver(score);
+        }, 450);
+      }
     }
 
     function drawGrid(context) {
@@ -152,7 +164,7 @@
     }
 
     function draw() {
-      if (!canvas) return;
+      if (!canvas || !gameCtx) return;
       colors = gameCtx.readColors();
       var canvasCtx = canvas.getContext("2d");
       canvasCtx.fillStyle = colors.bg;
@@ -181,12 +193,12 @@
         canvasCtx.fillStyle = "rgba(0, 0, 0, 0.55)";
         canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
         canvasCtx.fillStyle = colors.fg;
-        canvasCtx.font = "bold 12px monospace";
+        canvasCtx.font = "bold 14px monospace";
         canvasCtx.textAlign = "center";
-        canvasCtx.fillText("Game over", canvas.width / 2, canvas.height / 2 - 8);
-        canvasCtx.font = "11px monospace";
+        canvasCtx.fillText("Game over", canvas.width / 2, canvas.height / 2 - 6);
+        canvasCtx.font = "12px monospace";
         canvasCtx.fillStyle = colors.muted;
-        canvasCtx.fillText("press r to restart, q to quit", canvas.width / 2, canvas.height / 2 + 10);
+        canvasCtx.fillText("score: " + score, canvas.width / 2, canvas.height / 2 + 14);
       }
     }
 
@@ -211,23 +223,27 @@
         hud = document.createElement("div");
         hud.className = "terminal-game-hud mono";
 
+        var canvasWrap = document.createElement("div");
+        canvasWrap.className = "terminal-game-canvas-wrap";
+
         canvas = document.createElement("canvas");
         canvas.className = "terminal-game-canvas";
         canvas.setAttribute("role", "img");
         canvas.setAttribute("aria-label", "Snake game");
 
-        var controls = document.createElement("p");
-        controls.className = "terminal-game-controls mono";
-        controls.textContent = "Arrow/WASD move · r restart · q quit";
-
+        canvasWrap.appendChild(canvas);
         startCtx.containerEl.appendChild(hud);
-        startCtx.containerEl.appendChild(canvas);
-        startCtx.containerEl.appendChild(controls);
+        startCtx.containerEl.appendChild(canvasWrap);
 
         resetState();
         resizeCanvas();
         startLoop();
         draw();
+
+        resizeHandler = function () {
+          resizeCanvas();
+        };
+        window.addEventListener("resize", resizeHandler);
       },
 
       handleKeyDown: function (event) {
@@ -237,13 +253,16 @@
         return true;
       },
 
-      restart: function () {
-        resetState();
-        draw();
+      getScore: function () {
+        return score;
       },
 
       destroy: function () {
         stopLoop();
+        if (resizeHandler) {
+          window.removeEventListener("resize", resizeHandler);
+          resizeHandler = null;
+        }
         gameCtx = null;
         canvas = null;
         hud = null;

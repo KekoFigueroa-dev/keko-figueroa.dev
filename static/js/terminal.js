@@ -561,24 +561,27 @@
     if (!locked) this.inputEl.focus();
   };
 
+  Terminal.prototype.gamesBaseUrl = function () {
+    if (window.KekoGameHost && window.KekoGameHost.gamesBaseUrl) {
+      return window.KekoGameHost.gamesBaseUrl();
+    }
+    var scripts = document.getElementsByTagName("script");
+    for (var i = 0; i < scripts.length; i += 1) {
+      var src = scripts[i].src;
+      if (!src) continue;
+      if (src.indexOf("/terminal.js") !== -1 && src.indexOf("/terminal/games/") === -1) {
+        return src.replace(/terminal\.js(\?.*)?$/, "terminal/games/");
+      }
+    }
+    return "/static/js/terminal/games/";
+  };
+
   Terminal.prototype.ensureGameHost = function () {
     if (window.KekoGameHost) return Promise.resolve();
     if (this.gameHostLoading) return this.gameHostLoading;
 
     var self = this;
-    var base = "/static/js/terminal/games/";
-    if (window.KekoGameHost && window.KekoGameHost.gamesBaseUrl) {
-      base = window.KekoGameHost.gamesBaseUrl();
-    } else {
-      var scripts = document.getElementsByTagName("script");
-      for (var i = scripts.length - 1; i >= 0; i -= 1) {
-        var src = scripts[i].src;
-        if (src.indexOf("terminal.js") !== -1) {
-          base = src.replace(/terminal\.js(\?.*)?$/, "terminal/games/");
-          break;
-        }
-      }
-    }
+    var base = this.gamesBaseUrl();
 
     this.gameHostLoading = new Promise(function (resolve, reject) {
       var script = document.createElement("script");
@@ -589,7 +592,7 @@
       };
       script.onerror = function () {
         self.gameHostLoading = null;
-        reject(new Error("host load failed"));
+        reject(new Error("host load failed: " + script.src));
       };
       document.body.appendChild(script);
     });
@@ -908,7 +911,8 @@
         }
         window.KekoGameHost.start(self, window.KekoTerminalGames.snake);
       })
-      .catch(function () {
+      .catch(function (err) {
+        if (window.console && console.error) console.error("snake load failed", err);
         self.printLine("Could not load snake. Try again.", "terminal-line-error");
       });
   };

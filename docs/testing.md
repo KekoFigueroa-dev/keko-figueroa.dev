@@ -56,10 +56,10 @@ Manual verification steps for features that need human eyes or browser DevTools.
 
 **Status:** Implemented — run when validating snake or after game-host changes.
 
-- [ ] Running `snake` opens a canvas in the terminal
+- [ ] Running `snake` fills the terminal body with the game canvas
 - [ ] Arrow keys and WASD control the snake
-- [ ] `q` quits back to the terminal prompt
-- [ ] `r` restarts after game over (and during play)
+- [ ] `q` quits back to the terminal prompt (shows score if &gt; 0)
+- [ ] Losing ends the game, prints score in the terminal, and returns to the prompt
 - [ ] Escape quits back to the terminal prompt
 - [ ] Closing the terminal exits the game cleanly (no timers continue)
 - [ ] Minimizing the terminal exits the game cleanly

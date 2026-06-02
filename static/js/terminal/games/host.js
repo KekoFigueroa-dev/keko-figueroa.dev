@@ -1,18 +1,21 @@
 /**
- * Terminal mini-game host — mounts canvas games inside the overlay.
+ * Terminal mini-game host — full-body game mode inside the overlay.
  *
  * Each game module is a factory: function createGame() { return instance; }
  *
  * Instance contract:
- *   start(ctx)         — mount into ctx.containerEl; ctx has colors, readColors(), onExit()
- *   handleKeyDown(ev)  — return true when the key was consumed (movement, etc.)
- *   restart()          — optional; reset state without unmounting
+ *   start(ctx)         — mount into ctx.containerEl (full terminal body)
+ *   handleKeyDown(ev)  — return true when the key was consumed
  *   destroy()          — clear timers/listeners and remove game DOM
+ *
+ * ctx also provides:
+ *   readColors(), onGameOver(score) — called when the player loses
  */
 (function () {
   "use strict";
 
   var loaded = {};
+  var GAMES_BASE = null;
 
   function isTypingContext(el) {
     if (!el) return false;
@@ -36,6 +39,22 @@
     };
   }
 
+  /** Resolve /static/js/terminal/games/ from the terminal.js script tag. */
+  function gamesBaseUrl() {
+    if (GAMES_BASE) return GAMES_BASE;
+    var scripts = document.getElementsByTagName("script");
+    for (var i = 0; i < scripts.length; i += 1) {
+      var src = scripts[i].src;
+      if (!src) continue;
+      if (src.indexOf("/terminal.js") !== -1 && src.indexOf("/terminal/games/") === -1) {
+        GAMES_BASE = src.replace(/terminal\.js(\?.*)?$/, "terminal/games/");
+        return GAMES_BASE;
+      }
+    }
+    GAMES_BASE = "/static/js/terminal/games/";
+    return GAMES_BASE;
+  }
+
   function loadScript(src) {
     if (loaded[src]) return loaded[src];
     loaded[src] = new Promise(function (resolve, reject) {
@@ -45,7 +64,7 @@
         resolve();
       };
       script.onerror = function () {
-        loaded[src] = null;
+        delete loaded[src];
         reject(new Error("Failed to load " + src));
       };
       document.body.appendChild(script);
@@ -53,24 +72,15 @@
     return loaded[src];
   }
 
-  function gamesBaseUrl() {
-    var scripts = document.getElementsByTagName("script");
-    for (var i = scripts.length - 1; i >= 0; i -= 1) {
-      var src = scripts[i].src;
-      if (src.indexOf("terminal.js") !== -1) {
-        return src.replace(/terminal\.js(\?.*)?$/, "terminal/games/");
-      }
-    }
-    return "/static/js/terminal/games/";
-  }
-
-  function attachPanel(terminal) {
+  function enterGameMode(terminal) {
     var body = terminal.root.querySelector(".terminal-body");
-    var panel = document.createElement("div");
-    panel.className = "terminal-game-panel";
-    panel.setAttribute("data-terminal-game-panel", "");
-    body.insertBefore(panel, terminal.formEl);
-    return panel;
+    body.classList.add("is-game-mode");
+
+    var stage = document.createElement("div");
+    stage.className = "terminal-game-stage";
+    stage.setAttribute("data-terminal-game-stage", "");
+    body.appendChild(stage);
+    return stage;
   }
 
   function onGameKeyDown(terminal, event) {
@@ -82,13 +92,8 @@
 
     if (key === "q" || key === "Q" || key === "Escape") {
       event.preventDefault();
-      window.KekoGameHost.stop(terminal, "quit");
-      return;
-    }
-
-    if (key === "r" || key === "R") {
-      event.preventDefault();
-      if (typeof game.restart === "function") game.restart();
+      var quitScore = typeof game.getScore === "function" ? game.getScore() : undefined;
+      window.KekoGameHost.stop(terminal, "quit", quitScore);
       return;
     }
 
@@ -107,7 +112,7 @@
     },
 
     /**
-     * Mount a game factory inside the terminal. Only one game at a time.
+     * Take over the full terminal body for a game. Only one game at a time.
      */
     start: function (terminal, createGame) {
       if (!terminal || typeof createGame !== "function") return;
@@ -115,25 +120,25 @@
         window.KekoGameHost.stop(terminal, "replace");
       }
 
-      var panel = attachPanel(terminal);
+      var stage = enterGameMode(terminal);
       var instance = createGame();
       var keyHandler = function (event) {
         onGameKeyDown(terminal, event);
       };
 
       instance.start({
-        containerEl: panel,
+        containerEl: stage,
         colors: readThemeColors(),
         readColors: readThemeColors,
-        onExit: function () {
-          window.KekoGameHost.stop(terminal, "exit");
+        onGameOver: function (score) {
+          window.KekoGameHost.stop(terminal, "gameover", score);
         },
       });
 
       terminal.activeGame = {
         name: createGame.gameName || "game",
         instance: instance,
-        panel: panel,
+        stage: stage,
         keyHandler: keyHandler,
       };
 
@@ -142,9 +147,9 @@
     },
 
     /**
-     * Tear down the active game and restore the command prompt.
+     * Tear down the game and restore the normal terminal shell.
      */
-    stop: function (terminal, reason) {
+    stop: function (terminal, reason, score) {
       if (!terminal || !terminal.activeGame) return;
 
       var active = terminal.activeGame;
@@ -153,15 +158,27 @@
       if (typeof active.instance.destroy === "function") {
         active.instance.destroy();
       }
-      if (active.panel && active.panel.parentNode) {
-        active.panel.parentNode.removeChild(active.panel);
+      if (active.stage && active.stage.parentNode) {
+        active.stage.parentNode.removeChild(active.stage);
       }
+
+      var body = terminal.root.querySelector(".terminal-body");
+      if (body) body.classList.remove("is-game-mode");
 
       terminal.activeGame = null;
       terminal.setGameInputLocked(false);
 
-      if (reason === "quit" && terminal.printLine) {
-        terminal.printLine("Exited " + active.name + ".", "terminal-line-muted");
+      if (!terminal.printLine) return;
+
+      if (reason === "gameover") {
+        terminal.printLine("Game over — score: " + String(score == null ? 0 : score), "terminal-line-muted");
+        terminal.printLine("Back at the prompt. Type help or snake to play again.", "terminal-line-muted");
+      } else if (reason === "quit") {
+        if (typeof score === "number" && score > 0) {
+          terminal.printLine("Quit snake — score: " + score, "terminal-line-muted");
+        } else {
+          terminal.printLine("Exited snake.", "terminal-line-muted");
+        }
       }
     },
   };
