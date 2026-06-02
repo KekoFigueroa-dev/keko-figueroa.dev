@@ -380,6 +380,15 @@ NAV_LINKS = [
     ("Contact", "contact"),
 ]
 
+# Terminal `ls` / `cd` — static pages (projects come from PROJECTS).
+SITE_PAGES = [
+    {"name": "home", "path": "/"},
+    {"name": "projects", "path": "/projects"},
+    {"name": "blog", "path": "/blog"},
+    {"name": "about", "path": "/about"},
+    {"name": "contact", "path": "/contact"},
+]
+
 
 @app.context_processor
 def inject_globals():
@@ -397,6 +406,13 @@ def inject_globals():
         "site_linkedin": "https://www.linkedin.com/in/sergio-figueroa-98a9112b4/",
         "hero_prompt": "keko@keko-figueroa.dev:~$ whoami",
         "profile_file": profile_file,
+        "site_index": {
+            "pages": SITE_PAGES,
+            "projects": [
+                {"slug": project["slug"], "title": project["title"]}
+                for project in PROJECTS
+            ],
+        },
     }
 
 

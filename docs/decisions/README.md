@@ -24,5 +24,5 @@ Number files sequentially: `0001-…`, `0002-…`, etc. Never renumber published
 | [0004](0004-deploy-render-cloudflare.md) | Render + Cloudflare hosting |
 | [0005](0005-contact-form-postmark.md) | Contact form via Postmark |
 | [0006](0006-bot-protection-turnstile-rate-limit.md) | Turnstile + rate limit + honeypot |
-| [0007](0007-terminal-console-overlay.md) | Phase 4 Ship A — terminal console overlay *(planned)* |
+| [0007](0007-terminal-console-overlay.md) | Phase 4 Ship A — terminal console overlay *(implemented)* |
 | [0008](0008-terminal-console-games-snake.md) | Phase 4 Ship B — snake mini-game *(planned)* |

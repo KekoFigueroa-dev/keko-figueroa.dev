@@ -1,6 +1,6 @@
 # ADR 0007: Terminal Console Overlay (Phase 4 — Ship A)
 
-**Status:** Planned (not implemented)
+**Status:** Implemented (Ship A — navigation + themes)
 
 ## Context
 
@@ -12,38 +12,44 @@ Ship A covers **navigation + themes only**. Games and typed-output animations ar
 
 Add a **lazy-loaded, draggable terminal console overlay**:
 
-- **Toggle:** press `c` to open/close (keyboard shortcut documented in overlay help)
-- **Overlay:** fixed-position window, draggable via mouse and touch; does not replace page content
-- **Command parser:** small in-browser shell with predictable, documented commands (see README Phase 4 section)
-- **Persistence:** `localStorage` for window position and selected theme
+- **Toggle:** press `c` to open/close (ignored while focus is in `input`, `textarea`, `select`, or `contenteditable`)
+- **Overlay:** fixed-position window, draggable via pointer (mouse + touch); does not replace page content
+- **Command parser:** vanilla JS shell with the command set below
+- **Persistence:** `localStorage` keys `terminalPosition` (window position) and `siteTheme` (site-wide CSS theme)
+- **Lazy-load:** inline bootstrap in `base.html` loads `static/js/terminal.js` on first `c` press only
+- **Data:** `site_index` JSON embedded from Flask (`SITE_PAGES` + `PROJECTS` slugs)
 - **Ship boundary:** no games, no snake, no typed character animations in Ship A
 
-Planned commands (Ship A):
+Commands (Ship A):
 
 | Command | Behavior |
 |---|---|
 | `help` | List available commands |
 | `clear` | Clear terminal output |
-| `close` | Close overlay |
-| `history` | Show command history |
-| `ls` | List navigable routes |
-| `cd <page>` | Navigate to a page (e.g. `cd projects`) |
-| `open <path>` | Open a path (e.g. `open /blog`) |
+| `close` | Close overlay (same as Esc) |
+| `history` | Print command history |
+| `ls` | List pages + project paths |
+| `cd <page>` | Navigate to `/`, `/projects`, `/blog`, `/about`, `/contact` |
+| `open <path>` | Navigate to a URL path |
 | `projects` | List project slugs |
 | `open project <slug>` | Navigate to `/projects/<slug>` |
-| `theme <name>` | Switch console theme |
+| `theme` | List themes + show current |
+| `theme <name>` | Switch theme (`matrix`, `solarized-dark`, `high-contrast`, `nord`) |
 
 Engineering constraints:
 
-- Lazy-load console JS/CSS on **first `c` press** — no terminal bundle on initial page load
+- **No external JS libraries** — vanilla only
+- Lazy-load on first `c` — no terminal bundle on initial page load
 - Full site navigation via normal links when JS is disabled
-- Respect `prefers-reduced-motion` (reduce/disable drag animations and motion-heavy effects)
-- Scope limited to the overlay; do not hijack global typing outside the console
+- Respect `prefers-reduced-motion` (no open/close transitions when reduced)
+- Output via `textContent` (not `innerHTML`) to avoid XSS from echoed input
+- Scope limited to the overlay; bootstrap `c` listener is the only always-on JS
 
 ## Consequences
 
-- Adds JS (lazy-loaded) — acceptable tradeoff because the portfolio remains server-rendered and the console is optional
-- Accessibility: overlay needs focus trap while open, Escape to close, visible focus states, and screen-reader-friendly command output
-- Must not block core content or hurt Lighthouse scores on pages where the console is never opened
-- Test checklist lives in `docs/testing.md` (Phase 4 — Ship A)
-- Ship B (snake) is a separate ADR and must not land in the same PR as Ship A unless explicitly requested
+- Adds lazy-loaded JS — acceptable because the portfolio remains server-rendered and the console is optional
+- Accessibility: dialog role, Esc to close, focus input on open, visible focus rings
+- Themes apply site-wide via `html[data-theme]` CSS variables
+- Open/closed state is **not** persisted — terminal starts closed on each page load
+- Test checklist: `docs/testing.md` (Phase 4 — Ship A)
+- Ship B (snake) remains a separate ADR and must not ship in the same PR as Ship A

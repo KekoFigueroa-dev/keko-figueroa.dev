@@ -1,10 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="matrix">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}Keko-Figueroa.Dev{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+    {# Restore saved theme before first paint (terminal `theme` command). #}
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("siteTheme");
+          if (saved) document.documentElement.setAttribute("data-theme", saved);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div class="site-grid" aria-hidden="true"></div>
@@ -36,6 +45,104 @@
         </nav>
       </div>
     </footer>
+
+    <script id="site-index" type="application/json">{{ site_index | tojson }}</script>
+
+    <div
+      id="terminal-overlay"
+      class="terminal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="terminal-title"
+      aria-hidden="true"
+      hidden
+    >
+      <div class="terminal-window">
+        <header class="terminal-header" data-terminal-drag-handle>
+          <span id="terminal-title" class="terminal-title mono">keko@keko:~$</span>
+          <button type="button" class="terminal-close-btn mono" data-terminal-close aria-label="Close terminal">×</button>
+        </header>
+        <div class="terminal-output mono" data-terminal-output role="log" aria-live="polite"></div>
+        <form class="terminal-input-row mono" data-terminal-form autocomplete="off">
+          <label class="terminal-prompt" for="terminal-input">$</label>
+          <input
+            id="terminal-input"
+            class="terminal-input"
+            type="text"
+            data-terminal-input
+            spellcheck="false"
+            autocapitalize="off"
+            autocomplete="off"
+            aria-label="Terminal command"
+          />
+        </form>
+      </div>
+    </div>
+
+    {# Lazy-load terminal.js on first `c` — keeps baseline pages free of console logic. #}
+    <script>
+      (function () {
+        var terminalLoaded = false;
+        var terminalLoading = false;
+        var pendingToggle = false;
+
+        function isTypingContext(el) {
+          if (!el) return false;
+          var tag = el.tagName;
+          return (
+            tag === "INPUT" ||
+            tag === "TEXTAREA" ||
+            tag === "SELECT" ||
+            el.isContentEditable
+          );
+        }
+
+        function loadTerminal(done) {
+          if (terminalLoaded) {
+            done();
+            return;
+          }
+          if (terminalLoading) {
+            pendingToggle = true;
+            return;
+          }
+          terminalLoading = true;
+          var script = document.createElement("script");
+          script.src = {{ url_for('static', filename='js/terminal.js') | tojson }};
+          script.onload = function () {
+            terminalLoaded = true;
+            terminalLoading = false;
+            if (window.KekoTerminal && window.KekoTerminal.init) {
+              window.KekoTerminal.init();
+            }
+            done();
+            if (pendingToggle) {
+              pendingToggle = false;
+              if (window.__kekoTerminal) window.__kekoTerminal.toggle();
+            }
+          };
+          script.onerror = function () {
+            terminalLoading = false;
+            pendingToggle = false;
+          };
+          document.body.appendChild(script);
+        }
+
+        function toggleTerminal() {
+          loadTerminal(function () {
+            if (window.__kekoTerminal) window.__kekoTerminal.toggle();
+          });
+        }
+
+        document.addEventListener("keydown", function (event) {
+          if (event.key !== "c" || event.ctrlKey || event.metaKey || event.altKey) return;
+          if (isTypingContext(document.activeElement)) return;
+          event.preventDefault();
+          toggleTerminal();
+        });
+      })();
+    </script>
+
     {% block extra_scripts %}{% endblock %}
   </body>
 </html>
