@@ -11,7 +11,7 @@ This repository is a server-rendered portfolio focused on back-end/data/AI proje
 ## Design Goals
 
 - Fast first render (no SPA runtime required)
-- Minimal JavaScript (Turnstile widget on contact page only when enabled)
+- Minimal JavaScript (lazy-loaded terminal console; Turnstile on contact when enabled)
 - Terminal-techy visual language without sacrificing readability
 - Content-as-code for transparent edits and review
 
@@ -23,11 +23,13 @@ This repository is a server-rendered portfolio focused on back-end/data/AI proje
 | 2 | Done | Portfolio routes, project cards, blog, terminal aesthetic |
 | 2.5 | Planned | Hero visual slidedeck (see `AGENTS.md`) |
 | 3 | Done | Contact form (Postmark + Turnstile + rate limit) |
-| 4 | Planned | Stripe.dev-inspired draggable terminal console — see below |
+| 4 | Next | Stripe.dev-inspired draggable terminal console — see below |
 
 ## Phase 4 — Terminal console (Stripe.dev-inspired)
 
-**Status: planned — not implemented yet.**
+**Status: Ship A implemented on branch `feature/terminal-console-ship-a` (not merged yet).**
+
+Press **`c`** on any page to open the draggable terminal overlay (lazy-loaded). Ship B (snake) is not included.
 
 An optional, draggable terminal overlay adds playful navigation without replacing the server-rendered site. Every page must remain fully usable with JS disabled; the console is an enhancement, not a dependency.
 
@@ -35,7 +37,7 @@ An optional, draggable terminal overlay adds playful navigation without replacin
 
 | Ship | Scope | Status |
 |---|---|---|
-| **Ship A** | Terminal navigation + themes | Planned |
+| **Ship A** | Terminal navigation + themes | Implemented (pending merge) |
 | **Ship B** | Snake mini-game inside the console | Planned (after Ship A) |
 
 Do not combine Ship A and Ship B in one merge unless explicitly requested.

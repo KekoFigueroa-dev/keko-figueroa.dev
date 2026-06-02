@@ -6,7 +6,7 @@ Manual verification steps for features that need human eyes or browser DevTools.
 
 ## Phase 4 — Terminal console (Ship A)
 
-**Status:** Planned — run this checklist when Ship A is implemented (not before).
+**Status:** Implemented — run when validating Ship A (branch `feature/terminal-console-ship-a` or after merge).
 
 ### Toggle and overlay
 

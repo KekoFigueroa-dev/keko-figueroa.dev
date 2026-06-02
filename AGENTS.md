@@ -62,8 +62,8 @@ Three seed posts on fintech/idempotency, ledger wallets, and pragmatic RAG. Add 
 - **Phase 2** (done): Full portfolio routes, project cards, blog, matrix-green terminal aesthetic.
 - **Phase 2.5** (planned): Hero visual slidedeck — see [Hero visual](#hero-visual) below.
 - **Phase 3** (done): Contact form POST (Postmark + Turnstile + rate limit).
-- **Phase 4** (planned): Stripe.dev-inspired draggable terminal console.
-  - **Ship A:** navigation + themes (no games) — ADR 0007
+- **Phase 4** (in progress): Stripe.dev-inspired draggable terminal console.
+  - **Ship A:** navigation + themes — implemented on feature branch
   - **Ship B:** snake mini-game inside console — ADR 0008 (separate ship, after A)
   - Test checklist: `docs/testing.md`
 

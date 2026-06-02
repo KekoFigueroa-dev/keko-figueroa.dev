@@ -165,6 +165,7 @@ PROJECTS = [
     {
         "slug": "token-e-sports-betting",
         "title": "token_e-sports_betting (Token_name_esports)",
+        "terminal_aliases": ["Token_name_esports", "token_name_esports"],
         "type": "private",
         "status_label": "In progress",
         "short_summary": (
@@ -380,6 +381,15 @@ NAV_LINKS = [
     ("Contact", "contact"),
 ]
 
+# Terminal `ls` / `cd` — static pages (projects come from PROJECTS).
+SITE_PAGES = [
+    {"name": "home", "path": "/"},
+    {"name": "projects", "path": "/projects"},
+    {"name": "blog", "path": "/blog"},
+    {"name": "about", "path": "/about"},
+    {"name": "contact", "path": "/contact"},
+]
+
 
 @app.context_processor
 def inject_globals():
@@ -397,6 +407,21 @@ def inject_globals():
         "site_linkedin": "https://www.linkedin.com/in/sergio-figueroa-98a9112b4/",
         "hero_prompt": "keko@keko-figueroa.dev:~$ whoami",
         "profile_file": profile_file,
+        "site_index": {
+            "pages": SITE_PAGES,
+            "projects": [
+                {
+                    "slug": project["slug"],
+                    "title": project["title"],
+                    "aliases": project.get("terminal_aliases", []),
+                }
+                for project in PROJECTS
+            ],
+            "posts": [
+                {"slug": post["slug"], "title": post["title"]}
+                for post in POSTS
+            ],
+        },
     }
 
 
