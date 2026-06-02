@@ -48,59 +48,85 @@ PROJECTS = [
         "type": "this_site",
         "status_label": "Live",
         "short_summary": (
-            "The portfolio itself: server-rendered Flask/Jinja site built for speed, "
-            "clarity, and honest project storytelling."
+            "This repo and live site: Flask/Jinja SSR, hardened contact pipeline, "
+            "and a Stripe.dev-style terminal with themes and a lazy-loaded snake game—"
+            "all without a CMS or database."
         ),
         "oneliner": (
-            "A fast, server-rendered portfolio built with Flask + Jinja to showcase "
-            "back-end/data/AI work without front-end bloat."
+            "A production portfolio that proves static-first back-end craft: "
+            "server-rendered pages, layered bot protection on contact, and an optional "
+            "terminal overlay that ships real engineering, not just CSS."
         ),
         "live_url": "https://keko-figueroa.dev",
         "repo_url": "https://github.com/KekoFigueroa-dev/keko-figueroa.dev",
         "repo_label": "Repo",
         "key_points": [
-            "Flask + Jinja + static CSS (no CMS, no database)",
-            "Terminal-techy matrix aesthetic with minimal JS",
-            "Content-as-code for projects and blog posts",
+            "SSR: Flask + Jinja, in-memory PROJECTS/POSTS, Gunicorn on Render + Cloudflare",
+            "Contact: Postmark HTTP API, Turnstile, Flask-Limiter (IP), honeypot field",
+            "Terminal: lazy-loaded overlay, virtual cd/ls/open, 4 themes, canvas snake (B1)",
         ],
         "problem": (
-            "Most portfolios look polished but hide technical depth. I needed one that "
-            "is fast, maintainable, and explicit about engineering trade-offs."
+            "Most portfolios optimize for visuals and hide how things are built. I needed "
+            "a site that is fast on first paint, cheap to operate, honest about trade-offs, "
+            "and deep enough that a back-end or fintech reviewer can see real system thinking—"
+            "including where money-adjacent patterns (idempotency, abuse resistance) show up."
         ),
         "what_it_is": (
-            "A production-ready personal site that doubles as a case study in practical "
-            "web architecture choices and clear technical communication."
+            "A server-rendered personal site and living engineering notebook. The same "
+            "codebase hosts project case studies, a static-first blog, a production contact "
+            "form, and an optional terminal console inspired by stripe.dev. The terminal is "
+            "enhancement-only: every route works with JavaScript disabled; the overlay lazy-loads "
+            "on first `c` and can run a canvas snake game without polluting the initial bundle."
         ),
         "constraints": [
-            "Keep stack simple and deployment-friendly (Render + Cloudflare).",
-            "Avoid DB/CMS overhead for content that changes infrequently.",
-            "Preserve speed and readability across desktop and mobile.",
+            "No database or CMS—content is Python data structures reviewed in git.",
+            "Minimal JavaScript: zero terminal/game code on first load; lazy-load per feature.",
+            "Contact must resist bots without storing submissions in-app (mailbox is the record).",
+            "Deploy footprint must stay small (Render web service + Cloudflare DNS/TLS).",
+            "Terminal must not hijack keyboard focus outside the overlay or break form inputs.",
         ],
         "architecture": (
-            "Server-rendered Flask routes with Jinja templates, static CSS for the "
-            "visual system, and in-memory content models in Python."
+            "Flask serves Jinja templates with shared layout and theme tokens in CSS. "
+            "`PROJECTS` and `POSTS` in `app.py` drive cards, detail pages, and a JSON `site_index` "
+            "embedded for the terminal. Contact posts to a Flask route that verifies Turnstile, "
+            "applies per-IP rate limits, checks a honeypot, and sends mail via Postmark. "
+            "The terminal loads from `static/js/terminal.js` on demand; games use a small host "
+            "under `static/js/terminal/games/` with one script per title."
         ),
         "architecture_points": [
-            "App entry: app.py",
-            "Templates: templates/",
-            "Styles: static/styles.css",
-            "Content source: PROJECTS + POSTS in code",
+            "Runtime: Python 3.12, Flask, Gunicorn (`Procfile`), `/health` JSON probe",
+            "Hosting: Render web service; Cloudflare for DNS, TLS, Turnstile widget",
+            "Content: `PROJECTS`, `POSTS`, `SITE_PAGES` in `app.py`; templates in `templates/`",
+            "Contact: `POST /contact` → Turnstile verify → Flask-Limiter → Postmark API",
+            "Terminal (Ship A): overlay UI, command parser, virtual cwd, `localStorage` layout + theme",
+            "Games (Ship B1): `KekoGameHost` + `snake` factory; full-body canvas; wrap-around edges",
+            "Docs: ADRs `0001`–`0009`, deploy/testing checklists under `docs/`",
         ],
         "key_decisions": [
-            "Flask/Jinja over SPA for performance, simplicity, and maintenance.",
-            "Minimal JS to reduce failure modes and keep first render fast.",
-            "No database; projects/posts are code-reviewed content.",
-            "Deploy on Render with Cloudflare for DNS/SSL and straightforward ops.",
+            "Flask/Jinja over SPA—first render is HTML; no client router or hydration tax.",
+            "Postmark API instead of SMTP on Render—fewer moving parts, better deliverability.",
+            "Layered abuse controls: Turnstile (when enabled), IP rate limits, honeypot silent drop.",
+            "Terminal lazy-loaded on `c`—baseline pages stay free of console logic.",
+            "Game host interface + per-game scripts—Ship B2/B3 can ship without refactoring Ship A.",
+            "Themes via `data-theme` on `<html>` and CSS variables—terminal `theme set` persists.",
+            "Architecture decisions recorded as short ADRs, not wiki sprawl.",
         ],
         "what_shipped": [
-            "Phase 2: full site routes, project cards, blog, and terminal aesthetic.",
-            "Phase 3: project detail pages and improved docs/ADRs.",
-            "Operational baseline: /health endpoint, Render-ready config, mobile-friendly UI.",
+            "Phase 1: deployable scaffold, `/health`, `runtime.txt`, Render + Cloudflare wiring.",
+            "Phase 2: home, projects, blog, about, contact shell; matrix-green design system; project detail template with pager.",
+            "Phase 3: Postmark-powered `POST /contact` with Reply-To visitor email; Cloudflare Turnstile (managed mode); Flask-Limiter (per-IP minute/hour caps); honeypot field; env-gated local dev skip.",
+            "Phase 3 docs: ADRs for Postmark, Turnstile/rate-limit, deploy and testing checklists.",
+            "Phase 4 Ship A: press `c` or navbar hint → draggable/dockable terminal; commands help, clear, close, history, ls, cd, open, projects, theme list/set; layout + theme in `localStorage`; `prefers-reduced-motion` respected.",
+            "Phase 4 Ship B1: `snake` command → lazy-load game host + snake; full-terminal play mode; wrap-around walls; theme-accent rendering; score on game over; clean teardown on quit/close.",
         ],
         "what_next": [
-            "Phase 2.5 hero visual slidedeck.",
-            "Optional contact form with light anti-spam controls.",
-            "Continuous polishing of case-study depth and writing.",
+            "Phase 2.5: hero visual slidedeck (blocked on artwork; see `AGENTS.md`).",
+            "Phase 4 Ship B2/B3: invaders and tetris via the same game host (separate ships).",
+            "Ongoing: deeper case-study copy on other projects; blog posts as they ship.",
+        ],
+        "notes": [
+            "Try it live: press `c`, run `help`, `theme list`, or `snake`.",
+            "Implementation checklists: `docs/testing.md`. Security/delivery ADRs: `docs/decisions/0005`–`0009`.",
         ],
     },
     {
